@@ -1,0 +1,99 @@
+name: Build and test on Virtualized Raspberry Pi OS
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        include:
+          # Debian 11
+          - os: bullseye
+            image: ghcr.io/dtcooper/raspberrypi-os:python3.12-bullseye
+          # Debian 12
+          - os: bookworm
+            image: ghcr.io/dtcooper/raspberrypi-os:python3.12-bookworm
+      fail-fast: false
+
+    name: Build on ${{ matrix.os }}
+    container:
+      image: ${{ matrix.image }}
+    env:
+      AWS_KVS_LOG_LEVEL: 2
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y \
+            automake \
+            build-essential \
+            cmake \
+            git \
+            gstreamer1.0-plugins-base-apps \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-ugly \
+            gstreamer1.0-tools \
+            gstreamer1.0-omx-generic \
+            libcurl4-openssl-dev \
+            libgstreamer1.0-dev \
+            libgstreamer-plugins-base1.0-dev \
+            liblog4cplus-dev \
+            libssl-dev \
+            pkg-config
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create build directory
+        run: mkdir build
+
+      - name: Run CMake
+        working-directory: ./build
+        run: cmake .. -DBUILD_GSTREAMER_PLUGIN=ON -DBUILD_DEPENDENCIES=OFF -DALIGNED_MEMORY_MODEL=ON
+
+      - name: Build
+        working-directory: ./build
+        run: make -j$(nproc)
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-session-name: ${{ secrets.AWS_ROLE_SESSION_NAME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-duration-seconds: 10800
+
+      - name: Run kvssink
+        working-directory: ./build
+        run: |
+          export GST_PLUGIN_PATH=`pwd`
+
+          timeout --kill-after=15s 30s \
+            gst-launch-1.0 -v videotestsrc is-live=true \
+            ! video/x-raw,framerate=10/1,width=640,height=480 \
+            ! clockoverlay time-format="%a %B %d, %Y %I:%M:%S %p" \
+            ! x264enc bframes=0 key-int-max=10 \
+            ! h264parse \
+            ! kvssink stream-name="cpp-producer-rpi-${{ matrix.os }}"
+         
+          EXIT_CODE=$?
+          echo "Command exited with code: $EXIT_CODE"
+
+          # 0: Process exited by itself before the timeout with code 0
+          # 1: Process exited by itself before the timeout with code 1
+          # 143: Process terminated by SIGTERM (expected)
+          # 137: Process killed by SIGKILL (if the --kill-after timeout is reached) 
+          if [ $EXIT_CODE -ne 143 ]; then
+            echo "Command did not exit gracefully after interrupt."
+            exit 1
+          fi

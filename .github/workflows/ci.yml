@@ -42,18 +42,15 @@ jobs:
       - name: Build GST RTSP Server Test Launch Sample
         run: |
           set -x
-          pwd
-          ls
-          git clone https://gitlab.freedesktop.org/gstreamer/gstreamer.git --single-branch -b 1.22
-          ls
-          cd gstreamer/subprojects/gst-rtsp-server/examples
-          ls
+          git clone --no-checkout --filter=blob:none --depth=1 -b 1.22 https://gitlab.freedesktop.org/gstreamer/gstreamer.git
+          cd gstreamer
+          git sparse-checkout init cone
+          git sparse-checkout set "subprojects/gst-rtsp-server/examples/test-launch.c"
+          git checkout
+          cd subprojects/gst-rtsp-server/examples
           gcc -o test-launch test-launch.c `pkg-config --cflags --libs gstreamer-rtsp-server-1.0`
-          ls test-launch
-          pwd
           mv ./test-launch $GITHUB_WORKSPACE
           cd $GITHUB_WORKSPACE
-          pwd
           rm -rf gstreamer
 
       - name: Build samples

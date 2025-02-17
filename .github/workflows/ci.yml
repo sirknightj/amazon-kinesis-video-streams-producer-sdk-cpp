@@ -78,8 +78,8 @@ jobs:
             ! h264parse \
             ! rtph264pay name=pay0 pt=96"
 
-          "$GITHUB_WORKSPACE"/test-launch -p 8554 "$(PIPELINE_8554)" &
-          "$GITHUB_WORKSPACE"/test-launch -p 8555 "$(PIPELINE_8555)" &
+          "$GITHUB_WORKSPACE"/test-launch -p 8554 "${PIPELINE_8554}" &
+          "$GITHUB_WORKSPACE"/test-launch -p 8555 "${PIPELINE_8555}" &
           
           echo "rtsp://127.0.0.1:8554/test" > rtsp-urls.txt
           echo "rtsp://127.0.0.1:8555/test" >> rtsp-urls.txt

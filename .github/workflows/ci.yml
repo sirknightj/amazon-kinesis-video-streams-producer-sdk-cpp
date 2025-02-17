@@ -51,8 +51,8 @@ jobs:
           gcc -o test-launch test-launch.c `pkg-config --cflags --libs gstreamer-rtsp-server-1.0`
           ls test-launch
           pwd
-          mv ./test-launch ${{ github.workspace }}
-          cd ${{ github.workspace }}
+          mv ./test-launch $GITHUB_WORKSPACE
+          cd $GITHUB_WORKSPACE
           pwd
           rm -rf gstreamer
 

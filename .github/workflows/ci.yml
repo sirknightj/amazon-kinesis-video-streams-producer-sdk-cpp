@@ -42,15 +42,18 @@ jobs:
       - name: Build GST RTSP Server Test Launch Sample
         run: |
           set -x
+          pwd
           ls
           git clone https://gitlab.freedesktop.org/gstreamer/gstreamer.git --single-branch -b 1.22
           ls
           cd gstreamer/subprojects/gst-rtsp-server/examples
           ls
           gcc -o test-launch test-launch.c `pkg-config --cflags --libs gstreamer-rtsp-server-1.0`
-          ls
-          mv test-launch ${{ github.workspace }}
+          ls test-launch
+          pwd
+          mv ./test-launch ${{ github.workspace }}
           cd ${{ github.workspace }}
+          pwd
           rm -rf gstreamer
 
       - name: Build samples

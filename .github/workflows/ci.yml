@@ -60,34 +60,26 @@ jobs:
           cmake .. -DBUILD_GSTREAMER_PLUGIN=ON -DBUILD_DEPENDENCIES=OFF -DALIGNED_MEMORY_MODEL=ON
           make -j$(nproc)
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-session-name: ${{ secrets.AWS_ROLE_SESSION_NAME }}
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-duration-seconds: 10800
-
       - name: Run multistream sample
         working-directory: ./build
         run: |
           set -x
-
-          ./test-launch -p 8554 "videotestsrc is-live=true \
-            ! textoverlay text="rtsp://127.0.0.1:8554/test" \
-            ! video/x=raw,height=480,width=640,framerate=10/1 \
-            ! x264enc tune-zerolatency bitrate=512 key-int-max=25 \
-            ! h264parse \
-            ! rtph264pay \
-            ! name=pay0 pt=96" &
-
-          ./test-launch -p 8555 "videotestsrc is-live=true \
-            ! textoverlay text="rtsp://127.0.0.1:8555/test" \
-            ! video/x=raw,height=480,width=640,framerate=10/1 \
+          
+          export PIPELINE_8554="videotestsrc is-live=true \
+            ! textoverlay text=rtsp://127.0.0.1:8554/test \
+            ! video/x-raw,height=480,width=640,framerate=10/1 \
             ! x264enc tune=zerolatency bitrate=512 key-int-max=25 \
             ! h264parse \
-            ! rtph264pay \
-            ! name=pay0 pt=96" &
+            ! rtph264pay name=pay0 pt=96"
+          export PIPELINE_8555="videotestsrc is-live=true \
+            ! textoverlay text=rtsp://127.0.0.1:8554/test \
+            ! video/x-raw,height=480,width=640,framerate=10/1 \
+            ! x264enc tune=zerolatency bitrate=512 key-int-max=25 \
+            ! h264parse \
+            ! rtph264pay name=pay0 pt=96"
+
+          $GITHUB_WORKSPACE/test-launch -p 8554 "PIPELINE_8554" &
+          $GITHUB_WORKSPACE/test-launch -p 8555 "PIPELINE_8555" &
           
           echo "rtsp://127.0.0.1:8554/test" > rtsp-urls.txt
           echo "rtsp://127.0.0.1:8555/test" >> rtsp-urls.txt

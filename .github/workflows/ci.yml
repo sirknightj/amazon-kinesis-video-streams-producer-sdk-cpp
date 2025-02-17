@@ -13,14 +13,14 @@ on:
 jobs:
   multistream-sample:
     name: Multistream sample on Ubuntu 22.04
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    container: public.ecr.aws/ubuntu/ubuntu:22.04_stable
     timeout-minutes: 30
 
     env:
       AWS_KVS_LOG_LEVEL: 2
       KVS_DEBUG_DUMP_DATA_FILE_DIR: ${{ github.workspace }}/build/debug_output
       GST_PLUGIN_PATH: ${{ github.workspace }}/build
-      DEBIAN_FRONTEND: noninteractive
       KVS_STREAM_NAME_BASE: demo-stream-producer-cpp-ubuntu-22.04-ci-kvs_gstreamer_multistream_sample
 
     permissions:
@@ -33,8 +33,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y git cmake build-essential pkg-config libssl-dev libcurl4-openssl-dev \
+          apt-get update
+          apt-get install -y git cmake build-essential pkg-config libssl-dev libcurl4-openssl-dev \
             liblog4cplus-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
             gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-bad gstreamer1.0-plugins-good \
             gstreamer1.0-plugins-ugly gstreamer1.0-tools curl mkvtoolnix libgstrtspserver-1.0

@@ -291,6 +291,7 @@ jobs:
     steps:
       - name: Enable WSL and install ${{ matrix.image }}
         run: |
+          wsl --update
           wsl --install -d ${{ matrix.image }}
 
       - name: Checkout repository

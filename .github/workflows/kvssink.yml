@@ -276,7 +276,8 @@ jobs:
 #            mkvinfo.exe -v -X "$($file.FullName)"
 #          }
 
-  runs-on: windows-2022
+  wsl-debug-dump-dir:
+    runs-on: windows-2022
     env:
       AWS_KVS_LOG_LEVEL: 1
     strategy:

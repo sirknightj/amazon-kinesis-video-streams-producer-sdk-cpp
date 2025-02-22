@@ -321,6 +321,7 @@ jobs:
       - name: Move repository in WSL
         run: |
           # Move to ~/kvs-cpp-repo for simplicity
+          mv /mnt/d/a/${{ github.repository }}/${{ github.repository }} ~/kvs-cpp-repo
           mv $GITHUB_WORKSPACE ~/kvs-cpp-repo
           mv /mnt/c/Users/${USER}/github/${{ github.repository }} ~/kvs-cpp-repo
 

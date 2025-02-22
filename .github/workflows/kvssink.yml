@@ -285,7 +285,7 @@ jobs:
         image:
           - Ubuntu-22.04
           - Ubuntu-24.04
-    fail-fast: false
+      fail-fast: false
     defaults:
       run:
         shell: wsl-bash {0}  # Automatically uses wsl-bash for each run step

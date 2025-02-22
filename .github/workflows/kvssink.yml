@@ -380,12 +380,3 @@ jobs:
             echo "Verifying $file with mkvinfo:"
             mkvinfo -v -X "$file"
           done
-
-      - name: Cleanup AWS Credentials from WSL
-        if: always()
-        run: |
-          C:\Windows\system32\wsl.exe unset AWS_DEFAULT_REGION
-          C:\Windows\system32\wsl.exe unset AWS_ACCESS_KEY_ID
-          C:\Windows\system32\wsl.exe unset AWS_SECRET_ACCESS_KEY
-          C:\Windows\system32\wsl.exe unset AWS_SESSION_TOKEN
-        shell: cmd

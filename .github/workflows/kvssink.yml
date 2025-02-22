@@ -315,22 +315,19 @@ jobs:
             mkvtoolnix
           use-cache: 'false' # Cache entry for Ubuntu 22.04 and 24.04 are the same (conflict)
 
-      - name: Checkout repository in WSL
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Move repository in WSL
         run: |
-          export GIT_TERMINAL_PROMPT=0
-
-          mkdir -p ~/kvs-cpp-repo
-          git clone --quiet --depth 1 https://github.com/${{ github.repository }}.git ~/kvs-cpp-repo
-
-          cd ~/kvs-cpp-repo
-          git fetch --quiet --depth 1 --no-tags --prune --update-head-ok origin +${{ github.sha }}:${{ github.ref }}
-          git checkout --quiet ${{ github.sha }}
+          # Move to ~/kvs-cpp-repo for simplicity
+          mv /mnt/c/Users/${USER}/github/${{ github.repository }} ~/kvs-cpp-repo
 
       - name: Build kvssink in WSL
         run: |
           mkdir -p ~/kvs-cpp-repo/build
           cd ~/kvs-cpp-repo/build
-          cmake .. -DBUILD_GSTREAMER_PLUGIN=ON -DCMAKE_BUILD_TYPE=Debug -DALIGNED_MEMORY_MODEL=ON -DBUILD_DEPENDENCIES=OFF
+          cmake .. -DBUILD_GSTREAMER_PLUGIN=ON -DALIGNED_MEMORY_MODEL=ON -DBUILD_DEPENDENCIES=OFF
           make -j$(nproc)
 
       - name: Configure AWS Credentials
@@ -344,25 +341,23 @@ jobs:
           mkdir -p ~/kvs-cpp-repo/build/debug_output
           export GST_PLUGIN_PATH=~/kvs-cpp-repo/build
           export KVS_DEBUG_DUMP_DATA_FILE_DIR=~/kvs-cpp-repo/build/debug_output
-          export AWS_DEFAULT_REGION=${{ env.AWS_DEFAULT_REGION }}
-          export AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }}
-          export AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }}
-          export AWS_SESSION_TOKEN=${{ env.AWS_SESSION_TOKEN }}
-               
-          set +e  # Disable exit on error for the timeout command
+
+          set +e  # Disable exit on error for the timeout command          
+          # Note: `env.` syntax to reference credentials to have GitHub Actions inject
+          # the secret values into these environment variables before the command runs,
+          # since the WSL shell doesn't have access to GitHub's environment variables
           timeout --preserve-status --signal=SIGINT --kill-after=15s 30s \
             gst-launch-1.0 videotestsrc is-live=true num-buffers=450 \
-            ! video/x-raw,framerate=30/1,width=640,height=480 \
-            ! videoconvert ! x264enc tune=zerolatency key-int-max=45 \
-            ! h264parse \
-            ! kvssink stream-name='demo-stream-cpp-kvssink-ci-wsl-${{ matrix.image }}'
+              ! video/x-raw,framerate=30/1,width=640,height=480 \
+              ! videoconvert ! x264enc tune=zerolatency key-int-max=45 \
+              ! h264parse \
+              ! kvssink stream-name='demo-stream-cpp-kvssink-ci-wsl-${{ matrix.image }}' \
+                  aws-region=${{ env.AWS_DEFAULT_REGION }} \
+                  access-key=${{ env.AWS_ACCESS_KEY_ID }} \
+                  secret-key=${{ env.AWS_SECRET_ACCESS_KEY }} \
+                  session-token=${{ env.AWS_SESSION_TOKEN }}
           EXIT_CODE=$?
           set -e  # Re-enable exit on error
-
-          unset AWS_DEFAULT_REGION
-          unset AWS_ACCESS_KEY_ID
-          unset AWS_SECRET_ACCESS_KEY
-          unset AWS_SESSION_TOKEN
 
           if [[ $EXIT_CODE -ne 0 ]]; then
             echo "gst-launch-1.0 exited with status: $EXIT_CODE"
@@ -371,12 +366,12 @@ jobs:
       - name: Verify MKV dump in WSL
         run: |
           cd ~/kvs-cpp-repo/build/debug_output
-          mkvfiles=(\$(ls *.mkv 2>/dev/null))
-          if [ \${#mkvfiles[@]} -eq 0 ]; then
+          mkvfiles=($(ls *.mkv 2>/dev/null))
+          if [ ${#mkvfiles[@]} -eq 0 ]; then
             echo 'No MKV files found in debug_output'
             exit 1
           fi
-          for file in \"\${mkvfiles[@]}\"; do
+          for file in "${mkvfiles[@]}"; do
             echo "Verifying $file with mkvinfo:"
             mkvinfo -v -X "$file"
           done

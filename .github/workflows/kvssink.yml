@@ -339,6 +339,15 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: us-west-2
 
+      - name: Send credentials to WSL
+        run: |
+          # WSL doesn't have access to the environment variables set by aws-actions/configure-aws-credentials)
+          wsl export AWS_DEFAULT_REGION=$Env:AWS_DEFAULT_REGION
+          wsl export AWS_ACCESS_KEY_ID=$Env:AWS_ACCESS_KEY_ID
+          wsl export AWS_SECRET_ACCESS_KEY=$Env:AWS_SECRET_ACCESS_KEY
+          wsl export AWS_SESSION_TOKEN=$Env:AWS_SESSION_TOKEN
+        shell: cmd
+
       - name: Run kvssink with dump dir in WSL
         run: |
           mkdir -p ~/kvs-cpp-repo/build/debug_output
@@ -362,3 +371,11 @@ jobs:
             echo "Verifying $file with mkvinfo:"
             mkvinfo -v -X "$file"
           done
+
+      - name: Cleanup AWS Credentials from WSL
+        if: always()
+        run: |
+          wsl unset AWS_DEFAULT_REGION
+          wsl unset AWS_ACCESS_KEY_ID
+          wsl unset AWS_SECRET_ACCESS_KEY
+          wsl unset AWS_SESSION_TOKEN

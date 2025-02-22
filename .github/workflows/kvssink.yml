@@ -339,19 +339,15 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: us-west-2
 
-      - name: Send credentials to WSL # WSL doesn't have access to the environment variables set by aws-actions/configure-aws-credentials)
-        run: |
-          C:\Windows\system32\wsl.exe export AWS_DEFAULT_REGION=$Env:AWS_DEFAULT_REGION
-          C:\Windows\system32\wsl.exe export AWS_ACCESS_KEY_ID=$Env:AWS_ACCESS_KEY_ID
-          C:\Windows\system32\wsl.exe export AWS_SECRET_ACCESS_KEY=$Env:AWS_SECRET_ACCESS_KEY
-          C:\Windows\system32\wsl.exe export AWS_SESSION_TOKEN=$Env:AWS_SESSION_TOKEN
-        shell: cmd
-
       - name: Run kvssink with dump dir in WSL
         run: |
           mkdir -p ~/kvs-cpp-repo/build/debug_output
           export GST_PLUGIN_PATH=~/kvs-cpp-repo/build
           export KVS_DEBUG_DUMP_DATA_FILE_DIR=~/kvs-cpp-repo/build/debug_output
+          export AWS_DEFAULT_REGION=${{ env.AWS_DEFAULT_REGION }}
+          export AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }}
+          export AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }}
+          export AWS_SESSION_TOKEN=${{ env.AWS_SESSION_TOKEN }}
           gst-launch-1.0 videotestsrc is-live=true num-buffers=450 \
             ! video/x-raw,framerate=30/1,width=640,height=480 \
             ! videoconvert ! x264enc tune=zerolatency key-int-max=45 \
@@ -378,3 +374,4 @@ jobs:
           C:\Windows\system32\wsl.exe unset AWS_ACCESS_KEY_ID
           C:\Windows\system32\wsl.exe unset AWS_SECRET_ACCESS_KEY
           C:\Windows\system32\wsl.exe unset AWS_SESSION_TOKEN
+        shell: cmd

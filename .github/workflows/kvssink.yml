@@ -315,21 +315,28 @@ jobs:
             mkvtoolnix
 
       - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set WSL workspace path
         run: |
-          echo "WSL_WORKSPACE=$(wsl wslpath -a '${{ github.workspace }}')" >> $GITHUB_ENV
-        shell: cmd
+          set -eu
+
+          export GIT_TERMINAL_PROMPT=0
+
+          mkdir -p ${{ inputs.working-dir }}
+          git clone --quiet --depth 1 https://github.com/${{ github.repository }}.git ~/kvs-cpp-repo
+
+          cd ~/kvs-cpp-repo
+          git fetch --quiet --depth 1 --no-tags --prune --update-head-ok origin +${{ github.sha }}:${{ github.ref }}
+          git checkout --quiet ${{ github.sha }}
 
       - name: Setup build directory in WSL
         run: |
-          mkdir -p $WSL_WORKSPACE/build
+          mkdir -p ~/kvs-cpp-repo/build
 
       - name: Build kvssink in WSL
         run: |
-          cd $WSL_WORKSPACE/build && cmake .. -DBUILD_GSTREAMER_PLUGIN=ON -DCMAKE_BUILD_TYPE=Debug -DALIGNED_MEMORY_MODEL=ON -DBUILD_DEPENDENCIES=OFF
-          cd $WSL_WORKSPACE/build && make -j$(nproc)
+          mkdir -p ~/kvs-cpp-repo/build
+          cd ~/kvs-cpp-repo/build
+          cmake .. -DBUILD_GSTREAMER_PLUGIN=ON -DCMAKE_BUILD_TYPE=Debug -DALIGNED_MEMORY_MODEL=ON -DBUILD_DEPENDENCIES=OFF
+          make -j$(nproc)
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -339,24 +346,24 @@ jobs:
 
       - name: Run kvssink with dump dir in WSL
         run: |
-          mkdir -p $WSL_WORKSPACE/build/debug_output
-          GST_PLUGIN_PATH=$WSL_WORKSPACE/build \
-          KVS_DEBUG_DUMP_DATA_FILE_DIR=$WSL_WORKSPACE/build/debug_output \
+          mkdir -p ~/kvs-cpp-repo/build/debug_output
+          export GST_PLUGIN_PATH=$WSL_WORKSPACE/build \
+          export KVS_DEBUG_DUMP_DATA_FILE_DIR=$WSL_WORKSPACE/build/debug_output \
           gst-launch-1.0 videotestsrc is-live=true num-buffers=450 \
-          ! video/x-raw,framerate=30/1,width=640,height=480 \
-          ! videoconvert ! x264enc tune=zerolatency key-int-max=45 \
-          ! h264parse \
-          ! kvssink stream-name='demo-stream-cpp-kvssink-ci-wsl${{ matrix.image }}'
+            ! video/x-raw,framerate=30/1,width=640,height=480 \
+            ! videoconvert ! x264enc tune=zerolatency key-int-max=45 \
+            ! h264parse \
+            ! kvssink stream-name='demo-stream-cpp-kvssink-ci-wsl-${{ matrix.image }}'
 
       - name: Verify MKV dump in WSL
         run: |
-          cd $WSL_WORKSPACE/build/debug_output && \
-          mkvfiles=(\$(ls *.mkv 2>/dev/null)); \
-          if [ \${#mkvfiles[@]} -eq 0 ]; then \
-            echo 'No MKV files found in debug_output'; \
-            exit 1; \
-          fi; \
-          for file in \"\${mkvfiles[@]}\"; do \
-            echo \"Verifying $file with mkvinfo:\"; \
-            mkvinfo -v -X \"$file\"; \
+          cd ~/kvs-cpp-repo/build/debug_output
+          mkvfiles=(\$(ls *.mkv 2>/dev/null))
+          if [ \${#mkvfiles[@]} -eq 0 ]; then
+            echo 'No MKV files found in debug_output'
+            exit 1
+          fi
+          for file in \"\${mkvfiles[@]}\"; do
+            echo "Verifying $file with mkvinfo:"
+            mkvinfo -v -X "$file"
           done

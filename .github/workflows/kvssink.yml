@@ -320,9 +320,10 @@ jobs:
 
       - name: Move repository in WSL
         run: |
-          # Move to ~/kvs-cpp-repo for simplicity
+          # Copy to ~/kvs-cpp-repo for simplicity
+          # Note: Can't move due to no permissions
           REPO_NAME=$(basename ${{ github.repository }})
-          mv /mnt/d/a/$REPO_NAME/$REPO_NAME ~/kvs-cpp-repo
+          cp -r /mnt/d/a/$REPO_NAME/$REPO_NAME ~/kvs-cpp-repo
 
       - name: Build kvssink in WSL
         run: |

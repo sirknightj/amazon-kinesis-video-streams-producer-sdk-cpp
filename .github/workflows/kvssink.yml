@@ -313,14 +313,13 @@ jobs:
             libssl-dev
             pkg-config
             mkvtoolnix
+          use-cache: 'false' # Cache entry for Ubuntu 22.04 and 24.04 are the same (conflict)
 
       - name: Checkout repository
         run: |
-          set -eu
-
           export GIT_TERMINAL_PROMPT=0
 
-          mkdir -p ${{ inputs.working-dir }}
+          mkdir -p ~/kvs-cpp-repo
           git clone --quiet --depth 1 https://github.com/${{ github.repository }}.git ~/kvs-cpp-repo
 
           cd ~/kvs-cpp-repo

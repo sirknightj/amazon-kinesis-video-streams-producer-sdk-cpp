@@ -321,12 +321,8 @@ jobs:
       - name: Move repository in WSL
         run: |
           # Move to ~/kvs-cpp-repo for simplicity
-          set +x
-          ls /mnt
-          ls /mnt/c/
-          ls /mnt/d/a/
-          ls /mnt/c/Users/runneradmin
-          mv /mnt/c/Users/${USER}/github/${{ github.repository }} ~/kvs-cpp-repo
+          REPO_NAME=$(basename ${{ github.repository }})
+          mv /mnt/d/a/$REPO_NAME/$REPO_NAME ~/kvs-cpp-repo
 
       - name: Build kvssink in WSL
         run: |

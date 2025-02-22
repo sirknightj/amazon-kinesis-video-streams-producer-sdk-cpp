@@ -320,6 +320,7 @@ jobs:
       - name: Set WSL workspace path
         run: |
           echo "WSL_WORKSPACE=$(wsl wslpath -a '${{ github.workspace }}')" >> $GITHUB_ENV
+        shell: cmd
 
       - name: Setup build directory in WSL
         run: |

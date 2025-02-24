@@ -438,7 +438,7 @@ jobs:
           gst-device-monitor-1.0 Video/Source
       
           # Verify if the virtual webcam is detected
-          if [[ ! gst-device-monitor-1.0 Video/Source | grep -q "VirtualCam" ]]; then
+          if [[ ! gst-device-monitor-1.0 Video/Source | grep -q "FakeWebCam" ]]; then
             echo "Error: FakeWebCam not detected by GStreamer"
             exit 1
           fi

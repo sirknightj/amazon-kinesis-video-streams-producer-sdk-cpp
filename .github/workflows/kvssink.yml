@@ -276,109 +276,7 @@ jobs:
 #            mkvinfo.exe -v -X "$($file.FullName)"
 #          }
 
-#  wsl-debug-dump-dir:
-#    runs-on: windows-2022
-#    env:
-#      AWS_KVS_LOG_LEVEL: 1
-#    strategy:
-#      matrix:
-#        image:
-#          - Ubuntu-22.04
-#          - Ubuntu-24.04
-#      fail-fast: false
-#    defaults:
-#      run:
-#        shell: wsl-bash {0}  # Automatically uses wsl-bash for each run step
-#    permissions:
-#      id-token: write
-#      contents: read
-#    steps:
-#      - uses: Vampire/setup-wsl@v4
-#        with:
-#          distribution: ${{ matrix.image }}
-#          additional-packages: |
-#            automake
-#            build-essential
-#            cmake
-#            git
-#            gstreamer1.0-plugins-base-apps
-#            gstreamer1.0-plugins-bad
-#            gstreamer1.0-plugins-good
-#            gstreamer1.0-plugins-ugly
-#            gstreamer1.0-tools
-#            libcurl4-openssl-dev
-#            libgstreamer1.0-dev
-#            libgstreamer-plugins-base1.0-dev
-#            liblog4cplus-dev
-#            libssl-dev
-#            pkg-config
-#            mkvtoolnix
-#          use-cache: 'false' # Cache entry for Ubuntu 22.04 and 24.04 are the same (conflict)
-#
-#      - name: Checkout repository
-#        uses: actions/checkout@v4
-#
-#      - name: Move repository in WSL
-#        run: |
-#          # Copy to ~/kvs-cpp-repo for simplicity
-#          # Note: Can't move due to no permissions
-#          REPO_NAME=$(basename ${{ github.repository }})
-#          cp -r /mnt/d/a/$REPO_NAME/$REPO_NAME ~/kvs-cpp-repo
-#
-#      - name: Build kvssink in WSL
-#        run: |
-#          mkdir -p ~/kvs-cpp-repo/build
-#          cd ~/kvs-cpp-repo/build
-#          cmake .. -DBUILD_GSTREAMER_PLUGIN=ON -DALIGNED_MEMORY_MODEL=ON -DBUILD_DEPENDENCIES=OFF
-#          make -j$(nproc)
-#
-#      - name: Configure AWS Credentials
-#        uses: aws-actions/configure-aws-credentials@v4
-#        with:
-#          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-#          aws-region: us-west-2
-#
-#      - name: Run kvssink with dump dir in WSL
-#        run: |
-#          mkdir -p ~/kvs-cpp-repo/build/debug_output
-#          export GST_PLUGIN_PATH=~/kvs-cpp-repo/build
-#          export KVS_DEBUG_DUMP_DATA_FILE_DIR=~/kvs-cpp-repo/build/debug_output
-#
-#          set +e  # Disable exit on error for the timeout command
-#          # Note: `env.` syntax to reference credentials to have GitHub Actions inject
-#          # the secret values into these environment variables before the command runs,
-#          # since the WSL shell doesn't have access to GitHub's environment variables
-#          timeout --preserve-status --signal=SIGINT --kill-after=15s 30s \
-#            gst-launch-1.0 videotestsrc is-live=true num-buffers=450 \
-#              ! video/x-raw,framerate=30/1,width=640,height=480 \
-#              ! videoconvert ! x264enc tune=zerolatency key-int-max=45 \
-#              ! h264parse \
-#              ! kvssink stream-name='demo-stream-cpp-kvssink-ci-wsl-${{ matrix.image }}' \
-#                  aws-region=${{ env.AWS_DEFAULT_REGION }} \
-#                  access-key=${{ env.AWS_ACCESS_KEY_ID }} \
-#                  secret-key=${{ env.AWS_SECRET_ACCESS_KEY }} \
-#                  session-token=${{ env.AWS_SESSION_TOKEN }}
-#          EXIT_CODE=$?
-#          set -e  # Re-enable exit on error
-#
-#          if [[ $EXIT_CODE -ne 0 ]]; then
-#            echo "gst-launch-1.0 exited with status: $EXIT_CODE"
-#          fi
-#
-#      - name: Verify MKV dump in WSL
-#        run: |
-#          cd ~/kvs-cpp-repo/build/debug_output
-#          mkvfiles=($(ls *.mkv 2>/dev/null))
-#          if [ ${#mkvfiles[@]} -eq 0 ]; then
-#            echo 'No MKV files found in debug_output'
-#            exit 1
-#          fi
-#          for file in "${mkvfiles[@]}"; do
-#            echo "Verifying $file with mkvinfo:"
-#            mkvinfo -v -X "$file"
-#          done
-
-  wsl-debug-dump-dir-mock-webcam:
+  wsl-debug-dump-dir:
     runs-on: windows-2022
     env:
       AWS_KVS_LOG_LEVEL: 1
@@ -415,8 +313,6 @@ jobs:
             libssl-dev
             pkg-config
             mkvtoolnix
-            v4l2loopback-dkms
-            v4l2loopback-utils
           use-cache: 'false' # Cache entry for Ubuntu 22.04 and 24.04 are the same (conflict)
 
       - name: Checkout repository
@@ -428,20 +324,6 @@ jobs:
           # Note: Can't move due to no permissions
           REPO_NAME=$(basename ${{ github.repository }})
           cp -r /mnt/d/a/$REPO_NAME/$REPO_NAME ~/kvs-cpp-repo
-
-      - name: Setup virtual webcam in WSL
-        run: |
-          # Put it into /dev/video10
-          sudo modprobe v4l2loopback devices=1 video_nr=10 card_label="FakeWebCam" exclusive_caps=1
-
-          echo "Checking available video sources:"
-          gst-device-monitor-1.0 Video/Source
-      
-          # Verify if the virtual webcam is detected
-          if [[ ! gst-device-monitor-1.0 Video/Source | grep -q "FakeWebCam" ]]; then
-            echo "Error: FakeWebCam not detected by GStreamer"
-            exit 1
-          fi
 
       - name: Build kvssink in WSL
         run: |
@@ -461,25 +343,17 @@ jobs:
           mkdir -p ~/kvs-cpp-repo/build/debug_output
           export GST_PLUGIN_PATH=~/kvs-cpp-repo/build
           export KVS_DEBUG_DUMP_DATA_FILE_DIR=~/kvs-cpp-repo/build/debug_output
-          
-          # Start the fake webcam feed
-          gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! \
-            video/x-raw,framerate=30/1,width=640,height=480 ! \
-            v4l2sink device=/dev/video10 &
-          
-          # Give it some time to startup
-          sleep 10
 
-          set +e  # Disable exit on error for the timeout command          
+          set +e  # Disable exit on error for the timeout command
           # Note: `env.` syntax to reference credentials to have GitHub Actions inject
           # the secret values into these environment variables before the command runs,
           # since the WSL shell doesn't have access to GitHub's environment variables
           timeout --preserve-status --signal=SIGINT --kill-after=15s 30s \
-            gst-launch-1.0 v4l2src device=/dev/video10 \
+            gst-launch-1.0 videotestsrc is-live=true num-buffers=450 \
               ! video/x-raw,framerate=30/1,width=640,height=480 \
               ! videoconvert ! x264enc tune=zerolatency key-int-max=45 \
               ! h264parse \
-              ! kvssink stream-name='demo-stream-cpp-kvssink-ci-wsl-${{ matrix.image }}' \
+              ! kvssink stream-name='demo-stream-cpp-kvssink-ci-wsl-videotestsrc-${{ matrix.image }}' \
                   aws-region=${{ env.AWS_DEFAULT_REGION }} \
                   access-key=${{ env.AWS_ACCESS_KEY_ID }} \
                   secret-key=${{ env.AWS_SECRET_ACCESS_KEY }} \
@@ -503,3 +377,129 @@ jobs:
             echo "Verifying $file with mkvinfo:"
             mkvinfo -v -X "$file"
           done
+
+#  wsl-debug-dump-dir-mock-webcam:
+#    runs-on: windows-2022
+#    env:
+#      AWS_KVS_LOG_LEVEL: 1
+#    strategy:
+#      matrix:
+#        image:
+#          - Ubuntu-22.04
+#          - Ubuntu-24.04
+#      fail-fast: false
+#    defaults:
+#      run:
+#        shell: wsl-bash {0}  # Automatically uses wsl-bash for each run step
+#    permissions:
+#      id-token: write
+#      contents: read
+#    steps:
+#      - uses: Vampire/setup-wsl@v4
+#        with:
+#          distribution: ${{ matrix.image }}
+#          additional-packages: |
+#            automake
+#            build-essential
+#            cmake
+#            git
+#            gstreamer1.0-plugins-base-apps
+#            gstreamer1.0-plugins-bad
+#            gstreamer1.0-plugins-good
+#            gstreamer1.0-plugins-ugly
+#            gstreamer1.0-tools
+#            libcurl4-openssl-dev
+#            libgstreamer1.0-dev
+#            libgstreamer-plugins-base1.0-dev
+#            liblog4cplus-dev
+#            libssl-dev
+#            pkg-config
+#            mkvtoolnix
+#            v4l2loopback-dkms
+#            v4l2loopback-utils
+#          use-cache: 'false' # Cache entry for Ubuntu 22.04 and 24.04 are the same (conflict)
+#
+#      - name: Checkout repository
+#        uses: actions/checkout@v4
+#
+#      - name: Move repository in WSL
+#        run: |
+#          # Copy to ~/kvs-cpp-repo for simplicity
+#          # Note: Can't move due to no permissions
+#          REPO_NAME=$(basename ${{ github.repository }})
+#          cp -r /mnt/d/a/$REPO_NAME/$REPO_NAME ~/kvs-cpp-repo
+#
+#      - name: Setup virtual webcam in WSL
+#        run: |
+#          # Put it into /dev/video10
+#          sudo modprobe v4l2loopback devices=1 video_nr=10 card_label="FakeWebCam" exclusive_caps=1
+#
+#          echo "Checking available video sources:"
+#          gst-device-monitor-1.0 Video/Source
+#
+#          # Verify if the virtual webcam is detected
+#          if [[ ! gst-device-monitor-1.0 Video/Source | grep -q "FakeWebCam" ]]; then
+#            echo "Error: FakeWebCam not detected by GStreamer"
+#            exit 1
+#          fi
+#
+#      - name: Build kvssink in WSL
+#        run: |
+#          mkdir -p ~/kvs-cpp-repo/build
+#          cd ~/kvs-cpp-repo/build
+#          cmake .. -DBUILD_GSTREAMER_PLUGIN=ON -DALIGNED_MEMORY_MODEL=ON -DBUILD_DEPENDENCIES=OFF
+#          make -j$(nproc)
+#
+#      - name: Configure AWS Credentials
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+#          aws-region: us-west-2
+#
+#      - name: Run kvssink with dump dir in WSL
+#        run: |
+#          mkdir -p ~/kvs-cpp-repo/build/debug_output
+#          export GST_PLUGIN_PATH=~/kvs-cpp-repo/build
+#          export KVS_DEBUG_DUMP_DATA_FILE_DIR=~/kvs-cpp-repo/build/debug_output
+#
+#          # Start the fake webcam feed
+#          gst-launch-1.0 -v videotestsrc pattern=ball is-live=true ! \
+#            video/x-raw,framerate=30/1,width=640,height=480 ! \
+#            v4l2sink device=/dev/video10 &
+#
+#          # Give it some time to startup
+#          sleep 10
+#
+#          set +e  # Disable exit on error for the timeout command
+#          # Note: `env.` syntax to reference credentials to have GitHub Actions inject
+#          # the secret values into these environment variables before the command runs,
+#          # since the WSL shell doesn't have access to GitHub's environment variables
+#          timeout --preserve-status --signal=SIGINT --kill-after=15s 30s \
+#            gst-launch-1.0 v4l2src device=/dev/video10 \
+#              ! video/x-raw,framerate=30/1,width=640,height=480 \
+#              ! videoconvert ! x264enc tune=zerolatency key-int-max=45 \
+#              ! h264parse \
+#              ! kvssink stream-name='demo-stream-cpp-kvssink-ci-wsl-${{ matrix.image }}-fake-webcam' \
+#                  aws-region=${{ env.AWS_DEFAULT_REGION }} \
+#                  access-key=${{ env.AWS_ACCESS_KEY_ID }} \
+#                  secret-key=${{ env.AWS_SECRET_ACCESS_KEY }} \
+#                  session-token=${{ env.AWS_SESSION_TOKEN }}
+#          EXIT_CODE=$?
+#          set -e  # Re-enable exit on error
+#
+#          if [[ $EXIT_CODE -ne 0 ]]; then
+#            echo "gst-launch-1.0 exited with status: $EXIT_CODE"
+#          fi
+#
+#      - name: Verify MKV dump in WSL
+#        run: |
+#          cd ~/kvs-cpp-repo/build/debug_output
+#          mkvfiles=($(ls *.mkv 2>/dev/null))
+#          if [ ${#mkvfiles[@]} -eq 0 ]; then
+#            echo 'No MKV files found in debug_output'
+#            exit 1
+#          fi
+#          for file in "${mkvfiles[@]}"; do
+#            echo "Verifying $file with mkvinfo:"
+#            mkvinfo -v -X "$file"
+#          done

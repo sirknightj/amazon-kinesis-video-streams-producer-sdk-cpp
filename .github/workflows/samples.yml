@@ -389,8 +389,8 @@ jobs:
         run: |
           cd ~/kvs-cpp-repo/build
           export KVS_DEBUG_DUMP_DATA_FILE_DIR=~/kvs-cpp-repo/build/debug_output
+          mkdir "KVS_DEBUG_DUMP_DATA_FILE_DIR"
           export GST_PLUGIN_PATH=~/kvs-cpp-repo/build
-          mkdir "$GST_PLUGIN_PATH"
           export AWS_KVS_LOG_LEVEL=2
 
           curl -fsSL -o sample.mp4 https://awsj-iot-handson.s3-ap-northeast-1.amazonaws.com/kvs-workshop/sample.mp4

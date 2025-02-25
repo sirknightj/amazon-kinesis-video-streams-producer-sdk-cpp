@@ -235,6 +235,8 @@ jobs:
             mkvtoolnix
             libgstrtspserver-1.0
             curl
+            net-tools
+            iputils-ping
           use-cache: 'false'
 
       - name: Clone repository

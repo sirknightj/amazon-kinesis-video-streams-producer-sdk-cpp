@@ -322,7 +322,7 @@ jobs:
             args: sample.mp4
           - name: kvssink_gstreamer_sample
             args: sample.mp4
-        runner:
+        image:
           - Ubuntu-22.04
           - Ubuntu-24.04
 

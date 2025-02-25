@@ -179,7 +179,7 @@ jobs:
     strategy:
       matrix:
         environment:
-          - name: Ubuntu 22.04 container
+          - name: Ubuntu-22.04
             runs_on: ubuntu-latest
             container: public.ecr.aws/ubuntu/ubuntu:22.04_stable
             is_wsl: false
@@ -198,6 +198,9 @@ jobs:
     defaults:
       run:
         shell: ${{ matrix.environment.is_wsl && 'wsl-bash {0}' || 'bash' }}
+
+    env:
+      KVS_STREAM_NAME_BASE: demo-stream-producer-cpp${{ matrix.environment.is_wsl && '-wsl' || '' }}-ci-kvs_gstreamer_multistream_sample-${{ matrix.environment.is_wsl && matrix.environment.wsl_image || matrix.environment.name }}
 
     permissions:
       id-token: write
@@ -331,7 +334,7 @@ jobs:
 
           set +e  # Disable exit on error for the timeout command
           timeout --preserve-status --signal=SIGINT --kill-after=15s 30s \
-            ./kvs_gstreamer_multistream_sample "${KVS_STREAM_NAME_BASE}" rtsp-urls.txt
+            ./kvs_gstreamer_multistream_sample "${{ env.KVS_STREAM_NAME_BASE }}" rtsp-urls.txt
           EXIT_CODE=$?
           set -e  # Re-enable exit on error
           
@@ -372,17 +375,17 @@ jobs:
           found_1=0
 
           for file in "${mkvfiles[@]}"; do
-            if [[ "$file" == ${KVS_STREAM_NAME_BASE}_0* ]]; then
+            if [[ "$file" == ${{ env.KVS_STREAM_NAME_BASE }}_0* ]]; then
               found_0=1
-            elif [[ "$file" == ${KVS_STREAM_NAME_BASE}_1* ]]; then
+            elif [[ "$file" == ${{ env.KVS_STREAM_NAME_BASE }}_1* ]]; then
               found_1=1
             fi
           done
 
           if [ $found_0 -eq 0 ] || [ $found_1 -eq 0 ]; then
             echo "Expected at least one file starting with each prefix:"
-            echo "  - ${KVS_STREAM_NAME_BASE}_0"
-            echo "  - ${KVS_STREAM_NAME_BASE}_1"
+            echo "  - ${{ env.KVS_STREAM_NAME_BASE }}_0"
+            echo "  - ${{ env.KVS_STREAM_NAME_BASE }}_1"
             exit 1
           fi
 

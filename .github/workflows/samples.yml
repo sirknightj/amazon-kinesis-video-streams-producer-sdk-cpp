@@ -253,8 +253,11 @@ jobs:
         run: |
           set -x
 
-          WORK_DIR="${{ matrix.environment.is_wsl && '~/kvs-cpp-repo' || github.workspace }}"
-          cd "$WORK_DIR"
+          WORK_DIR=`pwd`
+          if [ "${{ matrix.environment.is_wsl }}" = "true" ]; then
+            cd ~/kvs-cpp-repo
+            WORK_DIR=`pwd`
+          fi
 
           git clone --no-checkout --filter=blob:none --depth=1 -b 1.22 https://gitlab.freedesktop.org/gstreamer/gstreamer.git
           cd gstreamer
@@ -269,7 +272,9 @@ jobs:
 
       - name: Build samples
         run: |
-          WORK_DIR="${{ matrix.environment.is_wsl && '~/kvs-cpp-repo' || github.workspace }}"
+          if [ "${{ matrix.environment.is_wsl }}" = "true" ]; then
+            cd ~/kvs-cpp-repo
+          fi
 
           mkdir build && cd build
           mkdir debug_output
@@ -285,11 +290,13 @@ jobs:
       - name: Run multistream sample
         run: |
           set -x
-          
-          WORK_DIR="${{ matrix.environment.is_wsl && '~/kvs-cpp-repo' || github.workspace }}"
-          cd $WORK_DIR/build
+          if [ "${{ matrix.environment.is_wsl }}" = "true" ]; then
+            cd ~/kvs-cpp-repo
+          fi
+          cd build
           
           export KVS_DEBUG_DUMP_DATA_FILE_DIR=`pwd`/debug_output
+          export GST_PLUGIN_PATH=`pwd`
 
           export PIPELINE_8554="videotestsrc is-live=true \
             ! textoverlay text=rtsp://127.0.0.1:8554/test \
@@ -346,8 +353,10 @@ jobs:
 
       - name: Verify MKV dump exists
         run: |
-          WORK_DIR="${{ matrix.environment.is_wsl && '~/kvs-cpp-repo' || github.workspace }}"
-          cd $WORK_DIR/build/debug_output
+          if [ "${{ matrix.environment.is_wsl }}" = "true" ]; then
+            cd ~/kvs-cpp-repo
+          fi
+          cd build/debug_output
           
           shopt -s nullglob  # Ensure globbing works correctly and avoids errors when no files are found
 

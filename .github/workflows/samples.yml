@@ -284,7 +284,8 @@ jobs:
           if [ "${{ matrix.environment.is_wsl }}" = "true" ]; then
             cd ~/kvs-cpp-repo
           fi
-          
+
+          GST_DEBUG=4
           # Define test pipelines
           export PIPELINE_8554="videotestsrc is-live=true \
             ! textoverlay text=rtsp://127.0.0.1:8554/test \

@@ -389,7 +389,7 @@ jobs:
         run: |
           cd ~/kvs-cpp-repo/build
           export KVS_DEBUG_DUMP_DATA_FILE_DIR=~/kvs-cpp-repo/build/debug_output
-          mkdir "KVS_DEBUG_DUMP_DATA_FILE_DIR"
+          mkdir "$KVS_DEBUG_DUMP_DATA_FILE_DIR"
           export GST_PLUGIN_PATH=~/kvs-cpp-repo/build
           export AWS_KVS_LOG_LEVEL=2
 

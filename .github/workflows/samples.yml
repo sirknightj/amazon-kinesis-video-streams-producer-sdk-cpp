@@ -404,7 +404,7 @@ jobs:
           export AWS_DEFAULT_REGION=${{ env.AWS_DEFAULT_REGION }}
           
           set +e  # Disable exit on error for the timeout command
-          ./${{ matrix.sample.name }} demo-stream-producer-cpp-wsl-${{ matrix.runner }}-ci-${{ matrix.sample.name }} ${{ matrix.sample.args }}
+          ./${{ matrix.sample.name }} demo-stream-producer-cpp-wsl-${{ matrix.image }}-ci-${{ matrix.sample.name }} ${{ matrix.sample.args }}
           EXIT_CODE=$?
           set -e  # Re-enable exit on error
           
@@ -432,4 +432,3 @@ jobs:
             echo "Verifying $file with mkvinfo (verbose and hexdump):"
             mkvinfo -v -X "$file"
           done
-        shell: bash

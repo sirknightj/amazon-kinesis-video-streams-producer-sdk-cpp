@@ -309,7 +309,7 @@ jobs:
 #        shell: bash
 
   wsl-sample-checks:
-    name: WSL - ${{ matrix.runner }}
+    name: WSL ${{ matrix.image }} - ${{ matrix.sample.name }}
 
     strategy:
       matrix:
@@ -334,6 +334,10 @@ jobs:
     permissions:
       id-token: write
       contents: read
+
+    defaults:
+      run:
+        shell: wsl-bash {0}  # Automatically uses wsl-bash for each run step
 
     steps:
       - uses: Vampire/setup-wsl@v4

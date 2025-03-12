@@ -105,17 +105,18 @@ if(NOT EXISTS ${DEPENDENCY_DOWNLOAD_PATH})
 endif()
 fetch_repo(kvscproducer)
 add_subdirectory(${DEPENDENCY_DOWNLOAD_PATH}/libkvscproducer/kvscproducer-src EXCLUDE_FROM_ALL)
-
 ############# find dependent libraries ############
 
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
 
-if (OPEN_SRC_INSTALL_PREFIX)
-  find_package(CURL REQUIRED PATHS ${OPEN_SRC_INSTALL_PREFIX})
-else()
-  find_package(CURL REQUIRED)
-endif()
+if(NOT BUILD_JNI_ONLY)
+  if (OPEN_SRC_INSTALL_PREFIX)
+    find_package(CURL REQUIRED PATHS ${OPEN_SRC_INSTALL_PREFIX})
+  else()
+    find_package(CURL REQUIRED)
+  endif()
+ENDIF()
 
 set(OPEN_SRC_INCLUDE_DIRS ${OPEN_SRC_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
 link_directories(${CURL_LIBRARY_DIRS})

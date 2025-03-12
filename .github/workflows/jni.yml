@@ -39,5 +39,5 @@ jobs:
       - name: Build JNI
         run: |
           mkdir build && cd build
-          cmake .. -DBUILD_JNI=ON -BUILD_DEPENDENCIES=${{ matrix.dependencies }}
+          cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=${{ matrix.dependencies }}
           make -j$(sysctl -n hw.cpu)

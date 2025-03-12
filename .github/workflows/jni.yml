@@ -47,9 +47,17 @@ jobs:
         run: |
           brew install autoconf automake CMake m4
 
-      - name: Build JNI
+      - name: Build JNI (CMake)
         run: |
           mkdir build && cd build
-          cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=${{ matrix.dependencies }} -DCMAKE_C_COMPILER=/usr/bin/clang
+          
+          if [ ${{ matrix.dependencies == 'ON' }} ]; then
+            cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=ON -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+          else
+            cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=OFF
+          fi
 
+      - name: Build JNI (make)
+        working-directory: ./build
+        run: |
           make -j$(sysctl -n hw.cpu)

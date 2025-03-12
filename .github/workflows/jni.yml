@@ -50,6 +50,6 @@ jobs:
       - name: Build JNI
         run: |
           mkdir build && cd build
-          cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=${{ matrix.dependencies }}
+          cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=${{ matrix.dependencies }} -DCMAKE_C_COMPILER=/usr/bin/clang
 
           make -j$(sysctl -n hw.cpu)

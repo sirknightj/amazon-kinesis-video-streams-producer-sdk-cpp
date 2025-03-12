@@ -11,12 +11,12 @@ include(GNUInstallDirs)
 # User Flags
 option(BUILD_GSTREAMER_PLUGIN "Build kvssink GStreamer plugin" OFF)
 option(BUILD_JNI "Build C++ wrapper for JNI to expose the functionality to Java/Android" OFF)
+option(BUILD_JNI_ONLY "Build only the JNI" OFF)
 option(BUILD_STATIC "Build with static linkage" OFF)
 option(ADD_MUCLIBC "Add -muclibc c flag" OFF)
 option(BUILD_DEPENDENCIES "Whether or not to build depending libraries from source" ON)
 option(BUILD_OPENSSL_PLATFORM "If buildng OpenSSL what is the target platform" OFF)
 option(BUILD_LOG4CPLUS_HOST "Specify host-name for log4cplus for cross-compilation" OFF)
-
 
 # Developer Flags
 option(BUILD_TEST "Build the testing tree" OFF)
@@ -73,25 +73,28 @@ if(BUILD_DEPENDENCIES)
 
   message(STATUS "Begin building dependencies.")
 
-  if (NOT WIN32)
-    build_dependency(autoconf)
-    build_dependency(automake)
-  endif()
-  
-  if(BUILD_LOG4CPLUS_HOST)
-    set(BUILD_ARGS -DBUILD_LOG4CPLUS_HOST=${BUILD_LOG4CPLUS_HOST})
-    build_dependency(log4cplus ${BUILD_ARGS} -DBUILD_STATIC=${BUILD_STATIC})
-  else()
-    build_dependency(log4cplus -DBUILD_STATIC=${BUILD_STATIC})
-  endif()
+  # When building the JNI, no need for log4cplus or curl
+  if (NOT BUILD_JNI_ONLY)
+    if (NOT WIN32)
+      build_dependency(autoconf)
+      build_dependency(automake)
+    endif()
 
-  message(STATUS "Finished building dependencies.")
+    if(BUILD_LOG4CPLUS_HOST)
+      set(BUILD_ARGS -DBUILD_LOG4CPLUS_HOST=${BUILD_LOG4CPLUS_HOST})
+      build_dependency(log4cplus ${BUILD_ARGS} -DBUILD_STATIC=${BUILD_STATIC})
+    else()
+      build_dependency(log4cplus -DBUILD_STATIC=${BUILD_STATIC})
+    endif()
+
+    message(STATUS "Finished building dependencies.")
+  endif()
 endif()
 
 set(BUILD_COMMON_LWS
     FALSE
     CACHE BOOL "Build ProducerC without LWS Support" FORCE)
-if(NOT DEFINED BUILD_COMMON_CURL)
+if(NOT BUILD_JNI_ONLY)
   set(BUILD_COMMON_CURL
       TRUE
       CACHE BOOL "Build ProducerC with CURL Support" FORCE)
@@ -117,22 +120,24 @@ endif()
 set(OPEN_SRC_INCLUDE_DIRS ${OPEN_SRC_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
 link_directories(${CURL_LIBRARY_DIRS})
 
-if (WIN32)
-  find_package(Log4cplus
-    NAMES log4cplus REQUIRED
-    PATHS ${OPEN_SRC_INSTALL_PREFIX}/lib)
-  SET(Log4cplus "log4cplus::log4cplus")
-else()
-  find_package(Log4cplus REQUIRED)
-  include_directories(${LOG4CPLUS_INCLUDE_DIR})
-  set(Log4cplus ${LOG4CPLUS_LIBRARIES})
-endif()
-
-if (WIN32)
-  if(EXISTS "C:\\gstreamer\\1.0\\msvc_x86_64\\bin\\pkg-config.exe")
-    set(PKG_CONFIG_EXECUTABLE "C:\\gstreamer\\1.0\\msvc_x86_64\\bin\\pkg-config.exe")
+if (NOT BUILD_JNI_ONLY)
+  if (WIN32)
+    find_package(Log4cplus
+      NAMES log4cplus REQUIRED
+      PATHS ${OPEN_SRC_INSTALL_PREFIX}/lib)
+    SET(Log4cplus "log4cplus::log4cplus")
   else()
-    set(PKG_CONFIG_EXECUTABLE "D:\\gstreamer\\1.0\\msvc_x86_64\\bin\\pkg-config.exe")
+    find_package(Log4cplus REQUIRED)
+    include_directories(${LOG4CPLUS_INCLUDE_DIR})
+    set(Log4cplus ${LOG4CPLUS_LIBRARIES})
+  endif()
+
+  if (WIN32)
+    if(EXISTS "C:\\gstreamer\\1.0\\msvc_x86_64\\bin\\pkg-config.exe")
+      set(PKG_CONFIG_EXECUTABLE "C:\\gstreamer\\1.0\\msvc_x86_64\\bin\\pkg-config.exe")
+    else()
+      set(PKG_CONFIG_EXECUTABLE "D:\\gstreamer\\1.0\\msvc_x86_64\\bin\\pkg-config.exe")
+    endif()
   endif()
 endif()
 
@@ -184,6 +189,7 @@ include_directories(${KINESIS_VIDEO_PRODUCER_CPP_SRC}/src/credential-providers)
 include_directories(${KINESIS_VIDEO_PRODUCER_CPP_SRC}/src/common)
 include_directories(${KINESIS_VIDEO_PRODUCER_CPP_SRC}/src/JNI/include)
 
+if (NOT BUILD_JNI_ONLY)
 install(
   DIRECTORY ${KINESIS_VIDEO_PRODUCER_CPP_SRC}/src
   DESTINATION .)
@@ -201,6 +207,7 @@ install(
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+endif()
 
 if(BUILD_JNI)
   find_package(JNI REQUIRED)

@@ -37,21 +37,13 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        if: ${{ matrix.dependencies == 'OFF' }}
-        run: |
-          brew install log4cplus
-
       - name: Build JNI (CMake)
         run: |
           mkdir build && cd build
           
           if [[ "${{ matrix.dependencies }}" == "ON" ]]; then
-            cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=ON -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DBUILD_COMMON_CURL=OFF
+            cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=ON -DBUILD_JNI_ONLY=ON
           else
-            export OPENSSL_ROOT_DIR=$(brew --prefix openssl)
-            export OPENSSL_LIBRARIES=$(brew --prefix openssl)/lib
-            export OPENSSL_INCLUDE_DIR=$(brew --prefix openssl)/include
             cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=OFF
           fi
 

@@ -47,7 +47,7 @@ jobs:
           mkdir build && cd build
           
           if [[ "${{ matrix.dependencies }}" == "ON" ]]; then
-            cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=ON -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -BUILD_COMMON_CURL=OFF
+            cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=ON -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DBUILD_COMMON_CURL=OFF
           else
             export OPENSSL_ROOT_DIR=$(brew --prefix openssl)
             export OPENSSL_LIBRARIES=$(brew --prefix openssl)/lib

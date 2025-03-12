@@ -46,9 +46,17 @@ jobs:
         run: |
           mkdir build && cd build
           
-          if [ ${{ matrix.dependencies == 'ON' }} ]; then
-            cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=ON -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+          if [[ "${{ matrix.dependencies }}" == "ON" ]]; then
+            export PKG_CONFIG_PATH=$PWD/open-source/local/lib/pkgconfig
+            cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=ON -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+              -DOPENSSL_ROOT_DIR=$PWD/open-source/local \
+              -DOPENSSL_INCLUDE_DIR=$PWD/open-source/local/include \
+              -DOPENSSL_LIBRARIES=$PWD/open-source/local/lib
+  
           else
+            export OPENSSL_ROOT_DIR=$(brew --prefix openssl)
+            export OPENSSL_LIBRARIES=$(brew --prefix openssl)/lib
+            export OPENSSL_INCLUDE_DIR=$(brew --prefix openssl)/include
             cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=OFF
           fi
 

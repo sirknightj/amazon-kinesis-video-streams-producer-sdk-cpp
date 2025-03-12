@@ -42,11 +42,6 @@ jobs:
         run: |
           brew install log4cplus
 
-      - name: Install dependencies
-        if: ${{ matrix.dependencies == 'ON' }}
-        run: |
-          brew install autoconf automake CMake m4
-
       - name: Build JNI (CMake)
         run: |
           mkdir build && cd build

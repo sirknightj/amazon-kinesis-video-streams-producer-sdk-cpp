@@ -14,9 +14,6 @@ jobs:
   mac-os:
     strategy:
       matrix:
-        dependencies:
-          - ON
-          - OFF
         mac:
           - name: Intel x86_64
             runner: macos-13
@@ -40,12 +37,7 @@ jobs:
       - name: Build JNI (CMake)
         run: |
           mkdir build && cd build
-          
-          if [[ "${{ matrix.dependencies }}" == "ON" ]]; then
-            cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=ON -DBUILD_JNI_ONLY=ON
-          else
-            cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=OFF -DBUILD_JNI_ONLY=ON
-          fi
+          cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=OFF -DBUILD_JNI_ONLY=ON
 
       - name: Build JNI (make)
         working-directory: ./build

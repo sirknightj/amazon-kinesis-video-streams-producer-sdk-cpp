@@ -22,7 +22,7 @@ jobs:
 
       fail-fast: false
 
-    name: JNI ${{ matrix.mac.name }} deps=${{ matrix.dependencies }}
+    name: JNI ${{ matrix.mac.name }}
 
     runs-on: ${{ matrix.mac.runner }}
     steps:

@@ -26,9 +26,14 @@ jobs:
             runner: ubuntu-latest
             container: public.ecr.aws/ubuntu/ubuntu:20.04_stable
 
+        java:
+          - 11
+          - 17
+          - 21
+
       fail-fast: false
 
-    name: JNI ${{ matrix.config.name }}
+    name: JNI ${{ matrix.config.name }} (Java ${{ matrix.java }})
     runs-on: ${{ matrix.config.runner }}
     container: ${{ matrix.config.container || '' }}
 
@@ -44,6 +49,12 @@ jobs:
         run: |
           apt update
           apt install -y git cmake build-essential
+
+      - name: Set up Java (JDK ${{ matrix.java }})
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: ${{ matrix.java }}
 
       - name: Clone repository
         uses: actions/checkout@v4

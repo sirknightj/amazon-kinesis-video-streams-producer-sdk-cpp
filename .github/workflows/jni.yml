@@ -37,7 +37,10 @@ jobs:
       - name: Build JNI (CMake)
         run: |
           mkdir build && cd build
-          cmake .. -DBUILD_JNI=ON -DBUILD_DEPENDENCIES=OFF -DBUILD_JNI_ONLY=ON
+          cmake .. -DBUILD_JNI=ON -DBUILD_JNI_ONLY=ON
+          
+          # Note: Dependencies on/off shouldn't make any difference since
+          # the only dependency for the JNI is PIC
 
       - name: Build JNI (make)
         working-directory: ./build

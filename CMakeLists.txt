@@ -103,8 +103,11 @@ set(DEPENDENCY_DOWNLOAD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/dependency)
 if(NOT EXISTS ${DEPENDENCY_DOWNLOAD_PATH})
   file(MAKE_DIRECTORY ${DEPENDENCY_DOWNLOAD_PATH})
 endif()
-fetch_repo(kvscproducer)
-add_subdirectory(${DEPENDENCY_DOWNLOAD_PATH}/libkvscproducer/kvscproducer-src EXCLUDE_FROM_ALL)
+
+if (NOT BUILD_JNI_ONLY)
+  fetch_repo(kvscproducer)
+  add_subdirectory(${DEPENDENCY_DOWNLOAD_PATH}/libkvscproducer/kvscproducer-src EXCLUDE_FROM_ALL)
+endif()
 ############# find dependent libraries ############
 
 find_package(Threads)
@@ -211,6 +214,13 @@ install(
 endif()
 
 if(BUILD_JNI)
+  set(DEPENDENCY_DOWNLOAD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/dependency)
+  set(BUILD_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
+  fetch_repo(kvspic ${BUILD_ARGS})
+  add_subdirectory("${DEPENDENCY_DOWNLOAD_PATH}/libkvspic/kvspic-src")
+  file(GLOB PIC_HEADERS "${pic_project_SOURCE_DIR}/src/*/include")
+  include_directories("${PIC_HEADERS}")
+
   find_package(JNI REQUIRED)
   include_directories(${JNI_INCLUDE_DIRS})
 

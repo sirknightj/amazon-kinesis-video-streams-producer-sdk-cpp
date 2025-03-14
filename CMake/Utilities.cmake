@@ -1,6 +1,7 @@
 # only fetch target repo for add_subdirectory later
 function(fetch_repo lib_name)
   set(supported_libs
+      kvspic
       kvscproducer)
   list(FIND supported_libs ${lib_name} index)
   if(${index} EQUAL -1)
@@ -34,6 +35,7 @@ function(build_dependency lib_name)
   set(supported_libs
       autoconf
       automake
+      kvspic
       log4cplus)
   list(FIND supported_libs ${lib_name} index)
   if(${index} EQUAL -1)

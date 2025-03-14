@@ -24,7 +24,7 @@ jobs:
             container: public.ecr.aws/ubuntu/ubuntu:22.04_stable
           - name: Ubuntu 20.04
             runner: ubuntu-latest
-            container: public.ecr.aws/ubuntu:20.04_stable
+            container: public.ecr.aws/ubuntu/ubuntu:20.04_stable
 
       fail-fast: false
 
@@ -34,6 +34,7 @@ jobs:
 
     env:
       DEBIAN_FRONTEND: noninteractive
+      JAVA_VERSIONS: "11 17 21"
 
     steps:
       - name: Setup XCode
@@ -53,13 +54,13 @@ jobs:
 
       - name: Build JNI with Multiple Java Versions
         run: |
-          for java_version in 11 17 21; do
+          for java_version in $JAVA_VERSIONS; do
             echo "Setting up Java JDK $java_version"
             echo "::group::Setting up Java JDK $java_version"
             echo "----------------------------------------"
-            sudo rm -rf /opt/java
-            sudo mkdir -p /opt/java
-            sudo ln -sfn $(actions/setup-java@v4 --distribution 'corretto' --java-version "$java_version") /opt/java/current
+            rm -rf /opt/java
+            mkdir -p /opt/java
+            ln -sfn $(actions/setup-java@v4 --distribution 'corretto' --java-version "$java_version") /opt/java/current
             export JAVA_HOME=/opt/java/current
             java -version
             javac -version

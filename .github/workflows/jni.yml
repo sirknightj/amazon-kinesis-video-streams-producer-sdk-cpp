@@ -24,21 +24,16 @@ jobs:
             container: public.ecr.aws/ubuntu/ubuntu:22.04_stable
           - name: Ubuntu 20.04
             runner: ubuntu-latest
-            container: public.ecr.aws/ubuntu/ubuntu:20.04_stable
-
-        java:
-          - 11
-          - 17
-          - 21
+            container: public.ecr.aws/ubuntu:20.04_stable
 
       fail-fast: false
 
-    name: JNI ${{ matrix.config.name }} (Java ${{ matrix.java }})
+    name: JNI ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.runner }}
     container: ${{ matrix.config.container || '' }}
 
     env:
-      DEBIAN_FRONTEND=noninteractive
+      DEBIAN_FRONTEND: noninteractive
 
     steps:
       - name: Setup XCode
@@ -53,24 +48,33 @@ jobs:
           apt update
           apt install -y git cmake build-essential
 
-      - name: Set up Java (JDK ${{ matrix.java }})
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'corretto'
-          java-version: ${{ matrix.java }}
-
       - name: Clone repository
         uses: actions/checkout@v4
 
-      - name: Build JNI (CMake)
+      - name: Build JNI with Multiple Java Versions
         run: |
-          mkdir build && cd build
-          cmake .. -DBUILD_JNI_ONLY=ON
-          
-          # Note: Dependencies on/off shouldn't make any difference since
-          # the only dependency for the JNI is PIC
+          for java_version in 11 17 21; do
+            echo "Setting up Java JDK $java_version"
+            echo "::group::Setting up Java JDK $java_version"
+            echo "----------------------------------------"
+            sudo rm -rf /opt/java
+            sudo mkdir -p /opt/java
+            sudo ln -sfn $(actions/setup-java@v4 --distribution 'corretto' --java-version "$java_version") /opt/java/current
+            export JAVA_HOME=/opt/java/current
+            java -version
+            javac -version
+            echo "::endgroup::"
 
-      - name: Build JNI (make)
-        working-directory: ./build
-        run: |
-          make -j
+            echo "Building JNI with Java $java_version"
+            echo "::group::Building JNI with Java $java_version"
+
+            # Note: Dependencies on/off shouldn't make any difference since
+            # the only dependency for the JNI is PIC
+
+            mkdir -p build && cd build
+            cmake .. -DBUILD_JNI_ONLY=ON
+            make -j
+            cd ..
+            rm -rf build
+            echo "::endgroup::"
+          done

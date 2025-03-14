@@ -45,4 +45,4 @@ jobs:
       - name: Build JNI (make)
         working-directory: ./build
         run: |
-          make -j$(sysctl -n hw.cpu)
+          make -j$(sysctl -n hw.ncpu)

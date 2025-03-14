@@ -70,14 +70,7 @@ jobs:
               cd build
 
               cmake .. -DBUILD_GSTREAMER_PLUGIN=ON -DBUILD_DEPENDENCIES=OFF -DALIGNED_MEMORY_MODEL=ON
-
-              # Running 'make' under QEMU inside GitHub Actions has shown instability,
-              # with random segmentation faults occurring sporadically. This could be 
-              # due to QEMU's emulation overhead, memory constraints, or transient 
-              # issues in the GitHub-hosted environment. To mitigate these failures, 
-              # we retry the build up to 5 times before considering it a hard failure.
-
-              make || make || make || make || make || make
+              make
 
               export GST_PLUGIN_PATH=$(pwd)
 

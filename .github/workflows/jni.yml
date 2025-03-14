@@ -38,7 +38,7 @@ jobs:
     container: ${{ matrix.config.container || '' }}
 
     env:
-      DEBIAN_FRONTEND=noninteractive
+      DEBIAN_FRONTEND: noninteractive
 
     steps:
       - name: Setup XCode

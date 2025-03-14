@@ -37,6 +37,9 @@ jobs:
     runs-on: ${{ matrix.config.runner }}
     container: ${{ matrix.config.container || '' }}
 
+    env:
+      DEBIAN_FRONTEND=noninteractive
+
     steps:
       - name: Setup XCode
         if: ${{ runner.os == 'macOS' }}

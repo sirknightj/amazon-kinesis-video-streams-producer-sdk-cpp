@@ -22,7 +22,7 @@ jobs:
           - name: Ubuntu 22.04
             runner: ubuntu-latest
             container: public.ecr.aws/ubuntu/ubuntu:22.04_stable
-          - name: Ubuntu 20.04 (Container)
+          - name: Ubuntu 20.04
             runner: ubuntu-latest
             container: public.ecr.aws/ubuntu/ubuntu:20.04_stable
 
@@ -43,7 +43,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           apt update
-          apt install -y cmake build-essential
+          apt install -y git cmake build-essential
 
       - name: Clone repository
         uses: actions/checkout@v4

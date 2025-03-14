@@ -11,7 +11,7 @@ include(GNUInstallDirs)
 # User Flags
 option(BUILD_GSTREAMER_PLUGIN "Build kvssink GStreamer plugin" OFF)
 option(BUILD_JNI "Build C++ wrapper for JNI to expose the functionality to Java/Android" OFF)
-option(BUILD_JNI_ONLY "Build only the JNI" OFF)
+option(BUILD_JNI_ONLY "Build ONLY the JNI, don't build C++ Producer SDK" OFF)
 option(BUILD_STATIC "Build with static linkage" OFF)
 option(ADD_MUCLIBC "Add -muclibc c flag" OFF)
 option(BUILD_DEPENDENCIES "Whether or not to build depending libraries from source" ON)
@@ -57,24 +57,22 @@ add_definitions(-DKVS_CA_CERT_PATH="${CMAKE_CURRENT_SOURCE_DIR}/certs/cert.pem")
 add_definitions(-DCMAKE_DETECTED_CACERT_PATH)
 
 
-if(BUILD_DEPENDENCIES)
-  if(NOT EXISTS ${KINESIS_VIDEO_OPEN_SOURCE_SRC})
-    file(MAKE_DIRECTORY ${KINESIS_VIDEO_OPEN_SOURCE_SRC}/local)
-  endif()
+if(NOT BUILD_JNI_ONLY)
+  if(BUILD_DEPENDENCIES)
+    if(NOT EXISTS ${KINESIS_VIDEO_OPEN_SOURCE_SRC})
+      file(MAKE_DIRECTORY ${KINESIS_VIDEO_OPEN_SOURCE_SRC}/local)
+    endif()
 
-  if (NOT OPEN_SRC_INSTALL_PREFIX)
-    set(OPEN_SRC_INSTALL_PREFIX ${KINESIS_VIDEO_OPEN_SOURCE_SRC}/local)
-    set(ENV{PKG_CONFIG_PATH}
-          "$ENV{PKG_CONFIG_PATH}:${OPEN_SRC_INSTALL_PREFIX}/lib/pkgconfig")
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OPEN_SRC_INSTALL_PREFIX})
-    set(ENV{PATH} "$ENV{PATH}:${OPEN_SRC_INSTALL_PREFIX}/bin")
-  endif()
+    if (NOT OPEN_SRC_INSTALL_PREFIX)
+      set(OPEN_SRC_INSTALL_PREFIX ${KINESIS_VIDEO_OPEN_SOURCE_SRC}/local)
+      set(ENV{PKG_CONFIG_PATH}
+            "$ENV{PKG_CONFIG_PATH}:${OPEN_SRC_INSTALL_PREFIX}/lib/pkgconfig")
+      set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OPEN_SRC_INSTALL_PREFIX})
+      set(ENV{PATH} "$ENV{PATH}:${OPEN_SRC_INSTALL_PREFIX}/bin")
+    endif()
 
 
-  message(STATUS "Begin building dependencies.")
-
-  # When building the JNI, no need for log4cplus or curl
-  if (NOT BUILD_JNI_ONLY)
+    message(STATUS "Begin building dependencies.")
     if (NOT WIN32)
       build_dependency(autoconf)
       build_dependency(automake)
@@ -89,42 +87,34 @@ if(BUILD_DEPENDENCIES)
 
     message(STATUS "Finished building dependencies.")
   endif()
-endif()
 
-set(BUILD_COMMON_LWS
-    FALSE
-    CACHE BOOL "Build ProducerC without LWS Support" FORCE)
-if(NOT BUILD_JNI_ONLY)
+  set(BUILD_COMMON_LWS
+      FALSE
+      CACHE BOOL "Build ProducerC without LWS Support" FORCE)
   set(BUILD_COMMON_CURL
       TRUE
       CACHE BOOL "Build ProducerC with CURL Support" FORCE)
-endif()
-set(DEPENDENCY_DOWNLOAD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/dependency)
-if(NOT EXISTS ${DEPENDENCY_DOWNLOAD_PATH})
-  file(MAKE_DIRECTORY ${DEPENDENCY_DOWNLOAD_PATH})
-endif()
+  set(DEPENDENCY_DOWNLOAD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/dependency)
+  if(NOT EXISTS ${DEPENDENCY_DOWNLOAD_PATH})
+    file(MAKE_DIRECTORY ${DEPENDENCY_DOWNLOAD_PATH})
+  endif()
 
-if (NOT BUILD_JNI_ONLY)
   fetch_repo(kvscproducer)
   add_subdirectory(${DEPENDENCY_DOWNLOAD_PATH}/libkvscproducer/kvscproducer-src EXCLUDE_FROM_ALL)
-endif()
-############# find dependent libraries ############
+  ############# find dependent libraries ############
 
-find_package(Threads)
-find_package(PkgConfig REQUIRED)
+  find_package(Threads)
+  find_package(PkgConfig REQUIRED)
 
-if(NOT BUILD_JNI_ONLY)
   if (OPEN_SRC_INSTALL_PREFIX)
     find_package(CURL REQUIRED PATHS ${OPEN_SRC_INSTALL_PREFIX})
   else()
     find_package(CURL REQUIRED)
   endif()
-ENDIF()
 
-set(OPEN_SRC_INCLUDE_DIRS ${OPEN_SRC_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
-link_directories(${CURL_LIBRARY_DIRS})
+  set(OPEN_SRC_INCLUDE_DIRS ${OPEN_SRC_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
+  link_directories(${CURL_LIBRARY_DIRS})
 
-if (NOT BUILD_JNI_ONLY)
   if (WIN32)
     find_package(Log4cplus
       NAMES log4cplus REQUIRED
@@ -194,26 +184,26 @@ include_directories(${KINESIS_VIDEO_PRODUCER_CPP_SRC}/src/common)
 include_directories(${KINESIS_VIDEO_PRODUCER_CPP_SRC}/src/JNI/include)
 
 if (NOT BUILD_JNI_ONLY)
-install(
-  DIRECTORY ${KINESIS_VIDEO_PRODUCER_CPP_SRC}/src
-  DESTINATION .)
+  install(
+    DIRECTORY ${KINESIS_VIDEO_PRODUCER_CPP_SRC}/src
+    DESTINATION .)
 
-add_library(KinesisVideoProducer ${LINKAGE} ${PRODUCER_CPP_SOURCE_FILES})
-target_link_libraries(
-  KinesisVideoProducer
-  PUBLIC kvsCommonCurl
-         cproducer
-         ${Log4cplus}
-         ${LIBCURL_LIBRARIES})
+  add_library(KinesisVideoProducer ${LINKAGE} ${PRODUCER_CPP_SOURCE_FILES})
+  target_link_libraries(
+    KinesisVideoProducer
+    PUBLIC kvsCommonCurl
+           cproducer
+           ${Log4cplus}
+           ${LIBCURL_LIBRARIES})
 
-install(
-    TARGETS KinesisVideoProducer
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+  install(
+      TARGETS KinesisVideoProducer
+      ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+      LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+      RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif()
 
-if(BUILD_JNI)
+if(BUILD_JNI OR BUILD_JNI_ONLY)
   set(DEPENDENCY_DOWNLOAD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/dependency)
   set(BUILD_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE})
   fetch_repo(kvspic ${BUILD_ARGS})

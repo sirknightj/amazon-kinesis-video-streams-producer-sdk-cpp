@@ -51,11 +51,10 @@ function(build_dependency lib_name)
   set(target_found NOTFOUND)
 
   if (${lib_name} STREQUAL "autoconf" OR ${lib_name} STREQUAL "automake")
-    find_program(
-            target_found
-            NAMES ${lib_name}
-            PATHS ${OPEN_SRC_INSTALL_PREFIX}/bin
-            NO_DEFAULT_PATH)
+    find_program(target_found
+      NAMES ${lib_name}
+      PATHS ${OPEN_SRC_INSTALL_PREFIX}/bin
+      NO_DEFAULT_PATH)
   else()
     set(lib_file_name ${lib_name})
     if (${lib_name} STREQUAL "openssl")

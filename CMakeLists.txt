@@ -72,7 +72,6 @@ if(NOT BUILD_JNI_ONLY)
       set(ENV{PATH} "$ENV{PATH}:${OPEN_SRC_INSTALL_PREFIX}/bin")
     endif()
 
-
     message(STATUS "Begin building dependencies.")
     if (NOT WIN32)
       build_dependency(autoconf)

@@ -6,7 +6,7 @@ find_program(MAKE_EXE NAMES make)
 
 include(ExternalProject)
 ExternalProject_Add(project_libautoconf
-    URL               http://ftp.gnu.org/gnu/autoconf/autoconf-2.69.tar.gz
+    URL               http://ftp.gnu.org/gnu/autoconf/autoconf-2.71.tar.gz
     GIT_SHALLOW       TRUE
     GIT_PROGRESS      TRUE
     PREFIX            ${CMAKE_CURRENT_BINARY_DIR}/build

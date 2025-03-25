@@ -74,6 +74,10 @@ if(NOT BUILD_JNI_ONLY)
 
 
     message(STATUS "Begin building dependencies.")
+    if (NOT WIN32)
+      build_dependency(autoconf)
+      build_dependency(automake)
+    endif()
 
     if(BUILD_LOG4CPLUS_HOST)
       set(BUILD_ARGS -DBUILD_LOG4CPLUS_HOST=${BUILD_LOG4CPLUS_HOST})
@@ -166,7 +170,6 @@ include_directories(${KINESIS_VIDEO_PRODUCER_CPP_SRC}/src/credential-providers)
 include_directories(${KINESIS_VIDEO_PRODUCER_CPP_SRC}/src/common)
 include_directories(${KINESIS_VIDEO_PRODUCER_CPP_SRC}/src/JNI/include)
 include_directories(${LOG4CPLUS_INCLUDE_DIR})
-link_directories(${OPEN_SRC_INSTALL_PREFIX}/lib)
 
 if (NOT BUILD_JNI_ONLY)
   install(
@@ -177,7 +180,9 @@ if (NOT BUILD_JNI_ONLY)
   target_link_libraries(
     KinesisVideoProducer
     PUBLIC cproducer
-           ${LOG4CPLUS_LIBRARIES})
+          ${LOG4CPLUS_LIBRARIES})
+
+  link_directories(${OPEN_SRC_INSTALL_PREFIX}/lib)
 
   install(
       TARGETS KinesisVideoProducer
@@ -215,22 +220,22 @@ if(BUILD_GSTREAMER_PLUGIN)
   else()
     add_library(gstkvssink MODULE ${GST_PLUGIN_SOURCE_FILES})
   endif()
-  target_link_libraries(gstkvssink PRIVATE ${LOG4CPLUS_LIBRARIES} ${GST_APP_LIBRARIES} KinesisVideoProducer)
+  target_link_libraries(gstkvssink PRIVATE ${GST_APP_LIBRARIES} KinesisVideoProducer)
 
   add_executable(kvssink_gstreamer_sample samples/kvssink_gstreamer_sample.cpp)
-  target_link_libraries(kvssink_gstreamer_sample ${LOG4CPLUS_LIBRARIES} ${GST_APP_LIBRARIES} kvspic)
+  target_link_libraries(kvssink_gstreamer_sample ${GST_APP_LIBRARIES} ${LOG4CPLUS_LIBRARIES} kvspic)
 
   add_executable(kvs_gstreamer_sample samples/kvs_gstreamer_sample.cpp)
-  target_link_libraries(kvs_gstreamer_sample ${LOG4CPLUS_LIBRARIES} ${GST_APP_LIBRARIES} KinesisVideoProducer kvspic)
+  target_link_libraries(kvs_gstreamer_sample ${GST_APP_LIBRARIES} KinesisVideoProducer)
 
   add_executable(kvs_gstreamer_multistream_sample samples/kvs_gstreamer_multistream_sample.cpp)
-  target_link_libraries(kvs_gstreamer_multistream_sample ${LOG4CPLUS_LIBRARIES} ${GST_APP_LIBRARIES} KinesisVideoProducer)
+  target_link_libraries(kvs_gstreamer_multistream_sample ${GST_APP_LIBRARIES} KinesisVideoProducer)
 
   add_executable(kvs_gstreamer_audio_video_sample samples/kvs_gstreamer_audio_video_sample.cpp)
-  target_link_libraries(kvs_gstreamer_audio_video_sample ${LOG4CPLUS_LIBRARIES} ${GST_APP_LIBRARIES} KinesisVideoProducer)
+  target_link_libraries(kvs_gstreamer_audio_video_sample ${GST_APP_LIBRARIES} KinesisVideoProducer)
 
   add_executable(kvs_gstreamer_file_uploader_sample samples/kvs_gstreamer_file_uploader_sample.cpp)
-  target_link_libraries(kvs_gstreamer_file_uploader_sample ${LOG4CPLUS_LIBRARIES} ${GST_APP_LIBRARIES})
+  target_link_libraries(kvs_gstreamer_file_uploader_sample ${GST_APP_LIBRARIES})
 endif()
 
 if(BUILD_TEST)

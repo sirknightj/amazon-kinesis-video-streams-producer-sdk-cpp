@@ -477,7 +477,7 @@ jobs:
             --track-origins=yes \
             --gen-suppressions=all \
             --log-file="$LOG_FILE" \
-            --suppressions="../.github/valgrind/glib.supp"
+            --suppressions="../.github/valgrind/glib.supp" \
             gst-launch-1.0 videotestsrc num-buffers=1 \
               ! x264enc \
               ! h264parse \

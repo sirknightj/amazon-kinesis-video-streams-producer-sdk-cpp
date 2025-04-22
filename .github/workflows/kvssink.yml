@@ -460,7 +460,7 @@ jobs:
           export GST_PLUGIN_PATH=`pwd`
 
           # Run it once just to confirm          
-          videotestsrc num-buffers=1 ! x264enc ! h264parse ! kvssink stream-name="valgrind-test-stream-cpp-kvssink-${{ matrix.run-config.os }}-${{ matrix.deps.name }}"
+          gst-launch-1.0 videotestsrc num-buffers=1 ! x264enc ! h264parse ! kvssink stream-name="valgrind-test-stream-cpp-kvssink-${{ matrix.run-config.os }}-${{ matrix.deps.name }}"
 
           echo "================"
           valgrind --leak-check=full \

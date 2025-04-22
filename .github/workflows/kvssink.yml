@@ -406,7 +406,10 @@ jobs:
       id-token: write
       contents: read
 
-    name: Valgrind check on ${{ matrix.run-config.os }} (${{ matrix.deps.name }})
+    env:
+      DEBIAN_FRONTEND: noninteractive
+
+    name: Valgrind ${{ matrix.run-config.os }} (${{ matrix.deps.name }})
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -414,7 +417,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y build-essential cmake pkg-config git \
+          apt-get install -y build-essential m4 cmake pkg-config git \
             gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-bad \
             gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly \
             gstreamer1.0-tools libgstreamer1.0-dev \

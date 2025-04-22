@@ -382,33 +382,48 @@ jobs:
 #          done
 
   valgrind-check:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      id-token: write
-      contents: read
     strategy:
       matrix:
-        include:
+        run-config:
           - os: Ubuntu-22.04
             image: public.ecr.aws/ubuntu/ubuntu:22.04_stable
           - os: Ubuntu-20.04
             image: public.ecr.aws/ubuntu/ubuntu:20.04_stable
+
+        deps:
+          - name: Deps-ON
+            cmake_flags: -DBUILD_DEPENDENCIES=ON
+          - name: Deps-OFF
+            cmake_flags: -DBUILD_DEPENDENCIES=OFF
+
       fail-fast: false
 
-    name: Valgrind check on ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    container: ${{ matrix.run-config.image }}
+
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+
+    name: Valgrind check on ${{ matrix.run-config.os }} (${{ matrix.deps.name }})
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential cmake pkg-config git \
+          apt-get update
+          apt-get install -y build-essential cmake pkg-config git \
             gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-bad \
             gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly \
             gstreamer1.0-tools libgstreamer1.0-dev \
             libgstreamer-plugins-base1.0-dev valgrind
+
+      - name: Install prebuilt-dependencies
+        if: ${{ matrix.deps.name == 'Deps-OFF' }}
+        run: |
+          apt-get install -y libcurl4-openssl-dev liblog4cplus-dev libssl-dev
 
       - name: Setup build directory
         run: |
@@ -418,7 +433,7 @@ jobs:
       - name: Build kvssink
         working-directory: ./build
         run: |
-          cmake .. -DBUILD_GSTREAMER_PLUGIN=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DALIGNED_MEMORY_MODEL=ON
+          cmake .. -DBUILD_GSTREAMER_PLUGIN=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DALIGNED_MEMORY_MODEL=ON ${{ matrix.deps.cmake_flags }}
           make -j$(nproc)
 
       - name: Configure AWS Credentials
@@ -436,5 +451,5 @@ jobs:
           valgrind --leak-check=full \
             --show-leak-kinds=definite \
             --track-origins=yes \
-            gst-launch-1.0 videotestsrc num-buffers=1 ! x264enc ! h264parse ! kvssink stream-name="valgrind-test-stream-cpp-kvssink-${{ matrix.os }}"
+            gst-launch-1.0 videotestsrc num-buffers=1 ! x264enc ! h264parse ! kvssink stream-name="valgrind-test-stream-cpp-kvssink-${{ matrix.run-config.os }}-${{ matrix.deps.name }}"
   

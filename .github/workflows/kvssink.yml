@@ -475,7 +475,6 @@ jobs:
           valgrind --leak-check=full \
             --show-leak-kinds=definite \
             --track-origins=yes \
-            --gen-suppressions=all \
             --log-file="$LOG_FILE" \
             --suppressions="../.github/valgrind/glib.supp" \
             gst-launch-1.0 videotestsrc num-buffers=1 \
@@ -487,3 +486,10 @@ jobs:
           echo "========== Valgrind Output =========="
           cat "$LOG_FILE"
           echo "====================================="
+
+          if grep -qE "definitely lost: [^0]" "$LOG_FILE" || grep -qE "indirectly lost: [^0]" "$LOG_FILE"; then
+            echo "❌ Valgrind found something definitely or indirectly lost"
+            exit 1
+          fi
+
+        shell: bash

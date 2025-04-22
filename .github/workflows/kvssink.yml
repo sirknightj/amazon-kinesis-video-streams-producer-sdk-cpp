@@ -19,22 +19,23 @@ jobs:
 #      contents: read
 #    strategy:
 #      matrix:
-#        include:
+#        run-config:
 #          - os: Ubuntu 22.04
 #            image: public.ecr.aws/ubuntu/ubuntu:22.04_stable
 #          - os: Ubuntu 20.04
 #            image: public.ecr.aws/ubuntu/ubuntu:20.04_stable
 #      fail-fast: false
 #
-#    name: kvssink unit tests on ${{ matrix.os }}
+#    name: kvssink unit tests on ${{ matrix.run-config.os }}
+#    container: ${{ matrix.run-config.image }}
 #    steps:
 #      - name: Checkout repository
 #        uses: actions/checkout@v4
 #
 #      - name: Install dependencies
 #        run: |
-#          sudo apt-get update
-#          sudo apt-get install -y automake build-essential cmake git \
+#          apt-get update
+#          apt-get install -y automake build-essential cmake git \
 #            gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-bad \
 #            gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly \
 #            gstreamer1.0-tools \
@@ -59,7 +60,7 @@ jobs:
 #          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
 #          role-session-name: ${{ secrets.AWS_ROLE_SESSION_NAME }}
 #          aws-region: ${{ secrets.AWS_REGION }}
-#          role-duration-seconds: 10800
+#          role-duration-seconds: 900
 #
 #      - name: Run the unit tests
 #        working-directory: ./build
@@ -146,7 +147,7 @@ jobs:
 #      contents: read
 #    strategy:
 #      matrix:
-#        include:
+#        run-config:
 #          - os: Ubuntu 22.04
 #            image: public.ecr.aws/ubuntu/ubuntu:22.04_stable
 #          - os: Ubuntu 20.04
@@ -417,11 +418,16 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y build-essential m4 cmake pkg-config git \
+          apt-get install -y build-essential cmake pkg-config git \
             gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-bad \
             gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly \
             gstreamer1.0-tools libgstreamer1.0-dev \
             libgstreamer-plugins-base1.0-dev valgrind
+
+      - name: Install additional build dependencies
+        if: ${{ matrix.deps.name == 'Deps-ON' }}
+        run: |
+          apt-get install -y m4
 
       - name: Install prebuilt-dependencies
         if: ${{ matrix.deps.name == 'Deps-OFF' }}
@@ -451,6 +457,11 @@ jobs:
         working-directory: ./build
         run: |
           export GST_PLUGIN_PATH=`pwd`
+
+          # Run it once just to confirm          
+          videotestsrc num-buffers=1 ! x264enc ! h264parse ! kvssink stream-name="valgrind-test-stream-cpp-kvssink-${{ matrix.run-config.os }}-${{ matrix.deps.name }}"
+
+          echo "================"
           valgrind --leak-check=full \
             --show-leak-kinds=definite \
             --track-origins=yes \

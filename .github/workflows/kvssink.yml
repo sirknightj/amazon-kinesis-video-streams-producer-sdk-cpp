@@ -466,5 +466,6 @@ jobs:
           valgrind --leak-check=full \
             --show-leak-kinds=definite \
             --track-origins=yes \
+            --gen-suppressions=all \
             gst-launch-1.0 videotestsrc num-buffers=1 ! x264enc ! h264parse ! kvssink stream-name="valgrind-test-stream-cpp-kvssink-${{ matrix.run-config.os }}-${{ matrix.deps.name }}"
   

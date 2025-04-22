@@ -409,6 +409,7 @@ jobs:
 
     env:
       DEBIAN_FRONTEND: noninteractive
+      STREAM_NAME: valgrind-test-stream-cpp-kvssink-${{ matrix.run-config.os }}-${{ matrix.deps.name }}
 
     name: Valgrind ${{ matrix.run-config.os }} (${{ matrix.deps.name }})
     steps:
@@ -454,18 +455,35 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           role-duration-seconds: 900
 
-      - name: Run kvssink with valgrind
+      - name: Verify kvssink works
         working-directory: ./build
         run: |
           export GST_PLUGIN_PATH=`pwd`
 
           # Run it once just to confirm          
-          gst-launch-1.0 videotestsrc num-buffers=1 ! x264enc ! h264parse ! kvssink stream-name="valgrind-test-stream-cpp-kvssink-${{ matrix.run-config.os }}-${{ matrix.deps.name }}"
+          gst-launch-1.0 videotestsrc num-buffers=1 ! x264enc ! h264parse ! kvssink stream-name="$STREAM_NAME"
 
-          echo "================"
+      - name: Run kvssink with valgrind
+        working-directory: ./build
+        run: |
+          export GST_PLUGIN_PATH=`pwd`
+          
+          mkdir -p valgrind_logs
+          LOG_FILE="valgrind_logs/${{ matrix.sample-executable.name }}.log"
+
+          echo "::group::Application logs for kvssink"
           valgrind --leak-check=full \
             --show-leak-kinds=definite \
             --track-origins=yes \
             --gen-suppressions=all \
-            gst-launch-1.0 videotestsrc num-buffers=1 ! x264enc ! h264parse ! kvssink stream-name="valgrind-test-stream-cpp-kvssink-${{ matrix.run-config.os }}-${{ matrix.deps.name }}"
-  
+            --log-file="$LOG_FILE" \
+            --suppressions="../.github/valgrind/glib.supp"
+            gst-launch-1.0 videotestsrc num-buffers=1 \
+              ! x264enc \
+              ! h264parse \
+              ! kvssink stream-name="$STREAM_NAME" log-config="../.github/configs/no_logs_configuration"
+          echo "::endgroup::"
+
+          echo "========== Valgrind Output =========="
+          cat "$LOG_FILE"
+          echo "====================================="

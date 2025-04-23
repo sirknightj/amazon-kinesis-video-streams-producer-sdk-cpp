@@ -35,12 +35,12 @@ jobs:
           make
           make install
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: ${{ secrets.AWS_ROLE_SESSION_NAME }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-duration-seconds: 10800
+          role-duration-seconds: 3600
       - name: Run tests
         run: |
           cd build
@@ -87,12 +87,12 @@ jobs:
           fi
       - name: Configure AWS Credentials
         if: ${{ matrix.parallel-build == 'ON' }} # Only need to run the tests once
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: ${{ secrets.AWS_ROLE_SESSION_NAME }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-duration-seconds: 10800
+          role-duration-seconds: 3600
       - name: Run tests
         if: ${{ matrix.parallel-build == 'ON' }}
         run: |
@@ -121,12 +121,12 @@ jobs:
           make
           make install
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: ${{ secrets.AWS_ROLE_SESSION_NAME }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-duration-seconds: 10800
+          role-duration-seconds: 3600
       - name: Run tests
         run: |
           cd build
@@ -162,12 +162,12 @@ jobs:
           make
           make install
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: ${{ secrets.AWS_ROLE_SESSION_NAME }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-duration-seconds: 10800
+          role-duration-seconds: 3600
       - name: Run tests
         run: |
           cd build
@@ -198,12 +198,12 @@ jobs:
           make
           make install
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: ${{ secrets.AWS_ROLE_SESSION_NAME }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-duration-seconds: 10800
+          role-duration-seconds: 3600
       - name: Run tests
         run: |
           cd build
@@ -301,12 +301,12 @@ jobs:
 
       - name: Configure AWS Credentials
         if: ${{ matrix.parallel-build == 'ON' }} # Only need to run the tests once
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: ${{ secrets.AWS_ROLE_SESSION_NAME }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-duration-seconds: 10800
+          role-duration-seconds: 3600
       - name: Run tests
         if: ${{ matrix.parallel-build == 'ON' }}
         run: |
@@ -345,12 +345,12 @@ jobs:
           dir
           .\build_windows.bat
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1-node16
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           role-session-name: ${{ secrets.AWS_ROLE_SESSION_NAME }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-duration-seconds: 10800
+          role-duration-seconds: 3600
       - name: Run tests
         run: |
           $env:Path += ';C:\Strawberry\perl\site\bin;C:\Strawberry\perl\bin;C:\Strawberry\c\bin;C:\Program Files\NASM;D:\producer\open-source\local\lib;D:\producer\open-source\local\bin'

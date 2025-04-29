@@ -41,7 +41,6 @@ function(build_dependency lib_name)
   set(supported_libs
       autoconf
       automake
-      kvspic
       log4cplus)
   list(FIND supported_libs ${lib_name} index)
   if(${index} EQUAL -1)
@@ -52,8 +51,7 @@ function(build_dependency lib_name)
   set(target_found NOTFOUND)
 
   if (${lib_name} STREQUAL "autoconf" OR ${lib_name} STREQUAL "automake")
-    find_program(
-      target_found
+    find_program(target_found
       NAMES ${lib_name}
       PATHS ${OPEN_SRC_INSTALL_PREFIX}/bin
       NO_DEFAULT_PATH)
@@ -63,8 +61,7 @@ function(build_dependency lib_name)
       set(lib_file_name ssl)
     endif()
 
-    find_library(
-      target_found
+    find_library(target_found
       NAMES ${lib_file_name}
       PATHS ${OPEN_SRC_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH)

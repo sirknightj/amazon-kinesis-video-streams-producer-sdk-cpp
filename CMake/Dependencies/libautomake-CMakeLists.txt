@@ -6,7 +6,7 @@ find_program(MAKE_EXE NAMES make)
 
 include(ExternalProject)
 ExternalProject_Add(project_libautomake
-    URL               http://ftp.gnu.org/gnu/automake/automake-1.16.1.tar.gz
+    URL               http://ftp.gnu.org/gnu/automake/automake-1.17.tar.gz
     GIT_SHALLOW       TRUE
     GIT_PROGRESS      TRUE
     PREFIX            ${CMAKE_CURRENT_BINARY_DIR}/build

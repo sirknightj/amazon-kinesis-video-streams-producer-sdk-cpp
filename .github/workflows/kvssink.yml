@@ -226,7 +226,7 @@ jobs:
       - name: Move repository
         run: |
           mkdir D:\producer
-          Move-Item -Path "D:\a\amazon-kinesis-video-streams-producer-sdk-cpp\amazon-kinesis-video-streams-producer-sdk-cpp\*" -Destination "D:\producer"
+          Move-Item -Path "$env:GITHUB_WORKSPACE" -Destination "D:\producer"
       - name: Install dependencies
         run: |
           choco install nasm strawberryperl mkvtoolnix
@@ -323,7 +323,8 @@ jobs:
           # Copy to ~/kvs-cpp-repo for simplicity
           # Note: Can't move due to no permissions
           REPO_NAME=$(basename ${{ github.repository }})
-          cp -r /mnt/d/a/$REPO_NAME/$REPO_NAME ~/kvs-cpp-repo
+          DRIVE_LETTER=$(echo "${{ github.workspace }}" | sed -r 's/^([A-Za-z]):.*/\1/' | tr '[:upper:]' '[:lower:]')
+          cp -r /mnt/$DRIVE_LETTER/a/$REPO_NAME/$REPO_NAME ~/kvs-cpp-repo
 
       - name: Build kvssink in WSL
         run: |

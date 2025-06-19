@@ -331,7 +331,7 @@ jobs:
       - name: Move repository
         run: |
           mkdir C:\producer
-          Move-Item -Path "$env:GITHUB_WORKSPACE" -Destination "D:\producer"
+          Move-Item -Path "$env:GITHUB_WORKSPACE\*" -Destination "D:\producer"
       - name: Install dependencies
         run: |
           choco install nasm strawberryperl

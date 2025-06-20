@@ -78,8 +78,8 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           choco install nasm strawberryperl pkgconfiglite mkvtoolnix
-          choco install gstreamer --version=1.22.8
-          choco install gstreamer-devel --version=1.22.8
+          choco install gstreamer --version=1.22.12
+          choco install gstreamer-devel --version=1.22.12
 
       - name: Build samples (Linux & Mac)
         if: runner.os == 'Linux' || runner.os == 'macOS'

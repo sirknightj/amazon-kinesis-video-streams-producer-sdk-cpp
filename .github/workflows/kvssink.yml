@@ -230,8 +230,8 @@ jobs:
       - name: Install dependencies
         run: |
           choco install nasm strawberryperl mkvtoolnix
-          choco install gstreamer --version=1.22.8
-          choco install gstreamer-devel --version=1.22.8
+          choco install gstreamer --version=1.22.12
+          choco install gstreamer-devel --version=1.22.12
       - name: Build repository
         run: |
           $env:Path += ';C:\Strawberry\perl\site\bin;C:\Strawberry\perl\bin;C:\Strawberry\c\bin;C:\Program Files\NASM;D:\producer\open-source\local\lib;D:\producer\open-source\local\bin'

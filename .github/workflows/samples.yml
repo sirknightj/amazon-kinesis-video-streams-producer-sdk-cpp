@@ -151,13 +151,9 @@ jobs:
         if: runner.os == 'Linux' || runner.os == 'macOS'
         working-directory: ./build
         run: |
-<<<<<<< Updated upstream
           mv ../assets/*.mp4 .
-          ./${{ matrix.sample.name }} demo-stream-producer-cpp-${{ matrix.runner.id }}-ci-${{ matrix.sample.name }} ${{ matrix.sample.args }}
-=======
           curl -fsSL -o sample.mp4 https://awsj-iot-handson.s3-ap-northeast-1.amazonaws.com/kvs-workshop/sample.mp4
           ./${{ matrix.sample.name }} demo-stream-producer-cpp-${{ matrix.runner.id }}-ci-${{ matrix.sample.name }} ${{ matrix.sample.args }} ${{ matrix.sample.metadata_args }}
->>>>>>> Stashed changes
 
       - name: Run ${{ matrix.sample.name }} (Windows)
         if: runner.os == 'Windows'

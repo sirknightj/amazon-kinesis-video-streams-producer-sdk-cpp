@@ -217,26 +217,36 @@ jobs:
           shopt -s nullglob
           
           for file in *.mkv; do
-            echo "Verifying $file with mkvinfo:"
-            output=$(mkvinfo -v -X "$file")
+            echo "Verifying ${file} with mkvinfo:"
+            mkvinfo -v -X "${file}" > mkvinfo_output.txt 2>&1
             found_notification=false
             found_image=false
-
-            if echo "$output" | grep -q "AWS_KINESISVIDEO_NOTIFICATION"; then
-              found_notification=true
-              echo "Found AWS_KINESISVIDEO_NOTIFICATION in $file"
-            fi
-
-            if echo "$output" | grep -q "AWS_KINESISVIDEO_IMAGE_GENERATION"; then
-              found_image=true
-              echo "Found AWS_KINESISVIDEO_IMAGE_GENERATION in $file"
-            fi
-
-            if [ "$found_notification" = false ] || [ "$found_image" = false ]; then
-              echo "Error: Required metadata strings not found in $file"
+      
+            if [ -f "mkvinfo_output.txt" ]; then
+              if grep -q "AWS_KINESISVIDEO_NOTIFICATION" "mkvinfo_output.txt"; then
+                found_notification=true
+                echo "Found AWS_KINESISVIDEO_NOTIFICATION in ${file}"
+              fi
+              
+              if grep -q "AWS_KINESISVIDEO_IMAGE_GENERATION" "mkvinfo_output.txt"; then
+                found_image=true
+                echo "Found AWS_KINESISVIDEO_IMAGE_GENERATION in ${file}"
+              fi
+              
+              if [ "${found_notification}" = false ] || [ "${found_image}" = false ]; then
+                echo "Error: Required metadata strings not found in ${file}"
+                echo "AWS_KINESISVIDEO_NOTIFICATION: ${found_notification}"
+                echo "AWS_KINESISVIDEO_IMAGE_GENERATION: ${found_image}"
+                rm -f "mkvinfo_output.txt"
+                exit 1
+              fi
+              rm -f "mkvinfo_output.txt"
+            else
+              echo "Error: Failed to create mkvinfo output file"
               exit 1
             fi
           done
+
         shell: bash
 
       - name: Check fragment metadata is present (Windows)
@@ -544,9 +554,9 @@ jobs:
 
       - name: Check fragment metadata is present (WSL)
         if: matrix.sample.metadata_args != null
-        working-directory: ~/kvs-cpp-repo/build/debug_output
         run: |
           shopt -s nullglob
+          cd ~/kvs-cpp-repo/build/debug_output
           
           for file in *.mkv; do
             echo "Verifying $file with mkvinfo:"
